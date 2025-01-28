@@ -18,6 +18,9 @@ body {
   background-color: red !important;
 } */
 
+.p-timeline-event-opposite{
+  display: none;
+}
 .card {
   background: var(--surface-card);
   padding: 2rem;

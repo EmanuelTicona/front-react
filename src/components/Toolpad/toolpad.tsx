@@ -10,7 +10,7 @@ import { PageContainer } from '@toolpad/core/PageContainer';
 import IncidentTable from '../Table/incident.table';
 import AlertTable from '../Table/alert.table';
 import EventTable from '../Table/event.table';
-import TivitRedLogo from '../../assets/tivit-red-logo.png';
+import TivitRedLogo from '../../assets/tivit-red-logo-2.png';
 
 const NAVIGATION: Navigation = [
   {
@@ -103,6 +103,13 @@ const demoTheme = extendTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#f20024',
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: '#fff !important',
         },
       },
     },
@@ -208,8 +215,8 @@ export default function DashboardLayoutBasic(props: any) {
         : item
     )}
       branding={{
-        logo: <img src={TivitRedLogo} alt="TIVIT logo" style={{ height: '120px !important' }} />,
-        title: <span style={{ color: '#ffffff' }}>AIOPS</span>,
+        logo: <img src={TivitRedLogo} alt="TIVIT logo" style={{ width: '100px', height: 'auto', backgroundPosition:'center', marginTop:'10px'}} />,
+        title: 'AIOPS',
         homeUrl: '/toolpad/core/introduction',
       }}
       router={router}
