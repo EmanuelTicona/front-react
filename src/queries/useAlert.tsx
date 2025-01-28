@@ -12,3 +12,11 @@ export const useAlerts = () => {
       });
     return info;
 }
+
+// export const useProjectItem = (name: string) => {
+//   const info = useQuery({
+//       queryKey: ['project-item', name],
+//       queryFn:() => projectItem(name),
+//     });
+//   return info;
+// }
