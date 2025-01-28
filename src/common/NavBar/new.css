@@ -1,0 +1,51 @@
+:root {
+    --angle: 45deg;
+    --opacity: 0.7;
+  }
+  
+  .NavBar--Aux{
+    background-color: #1b242d;
+  }
+
+  .newButton {
+    border: 1px solid #fff !important;
+    overflow: hidden;
+    position: relative;
+    border-radius: 5px; /* Borde redondeado */
+    cursor: pointer; /* Cambiar cursor para indicar interactividad */
+  }
+  
+  .newButton::before {
+    content: '';
+    position: absolute;
+  
+    background-image: conic-gradient( 
+    #00ccff,
+    #d500f9
+    );
+    animation: rotated 3s linear infinite; /* Duración ajustada */
+  }
+  
+  .newButton::after {
+    content: '';
+    position: absolute;
+    background: #1b242d;
+    inset: 2px;
+    border-radius: 10px; /* Bordes ligeramente redondeados */
+  }
+  
+  @keyframes rotated {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .newButton:hover::before {
+    border: 0 !important;
+    width: 30px;
+    height: 400px;
+    animation-duration: 1s; /* Animación más rápida al hacer hover */
+  }

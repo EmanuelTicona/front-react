@@ -1,0 +1,28 @@
+.incident-dialog .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+    background-color: #ff4444;
+    border-color: #ff4444;
+    color: #ffffff;
+}
+
+.incident-dialog .p-tabview .p-tabview-nav li .p-tabview-nav-link:not(.p-disabled):focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 68, 68, 0.2);
+}
+
+.incident-dialog .p-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.incident-dialog .surface-50 {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+.incident-dialog label.font-bold {
+    color: #666;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
