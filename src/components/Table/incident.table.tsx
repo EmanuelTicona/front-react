@@ -12,7 +12,7 @@ import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { TabView, TabPanel } from 'primereact/tabview';
-import '../incidentDetails.css';
+import '../../incidentDetails.css';
 
 
 const customTabStyle = {
