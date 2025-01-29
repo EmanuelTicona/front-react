@@ -316,18 +316,18 @@ export default function BasicFilterDemo() {
                                                 <Column
                                                     field="id"
                                                     header="ID Evento"
-                                                    style={{ width: '40%' }}
+                                                    style={{ width: '20%' }}
                                                 />
                                                 <Column
                                                     field="created_at"
                                                     header="Fecha Creación"
-                                                    style={{ width: '60%' }}
+                                                    style={{ width: '40%' }}
                                                     body={(rowData) => new Date(rowData.created_at).toLocaleString()}
                                                 />
                                                 <Column
                                                     field="last_event_date"
                                                     header="Fecha de Último Evento"
-                                                    style={{ width: '60%' }}
+                                                    style={{ width: '40%' }}
                                                     body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
                                                 />
                                             </DataTable>
