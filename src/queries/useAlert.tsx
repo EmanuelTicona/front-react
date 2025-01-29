@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { alert } from "../api/alert";
+import { alert, alertByIncidentId, alertById } from "../api/alert";
 import { sortDataDesc } from "../utils/filtered";
 
 export const useAlerts = () => {
@@ -13,10 +13,18 @@ export const useAlerts = () => {
     return info;
 }
 
-// export const useProjectItem = (name: string) => {
-//   const info = useQuery({
-//       queryKey: ['project-item', name],
-//       queryFn:() => projectItem(name),
-//     });
-//   return info;
-// }
+export const useAlertByIncidentId = (id: number) => {
+  return useQuery({
+    queryKey: ['alert-by-incident-id', id],
+    queryFn: () => alertByIncidentId(id),
+    enabled: id > 0,
+  });
+};
+
+export const useAlertById = (id: number) => {
+  return useQuery({
+    queryKey: ['alert-by-id', id],
+    queryFn: () => alertById(id),
+    enabled: id > 0,
+  });
+};

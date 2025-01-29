@@ -3,12 +3,12 @@ import { API_URL } from "../services";
 import { Event } from "../interfaces/event/event.interface";
 
 export const event = async (): Promise<Event[]> => {
-    try {
-        const response = await axios.get(API_URL + 'api/data/events');
-        console.log('API Response:', response.data); // Add this to check what's being returned
-        return response.data;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
+    const response = await axios.get(API_URL + 'api/data/events');
+    return response.data;
+};
+
+export const eventByAlertId = async (id: number): Promise<Event[]> => {
+    const response = await axios.get(API_URL + 'api/data/events/' + id);
+    const events = response.data?.data ?? [];
+    return events;
 };

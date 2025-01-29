@@ -2,14 +2,30 @@ import React, { useState } from 'react';
 import { FilterMatchMode } from 'primereact/api';
 import { DataTable, DataTableFilterMeta } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Dialog } from 'primereact/dialog';
+import { Tag } from 'primereact/tag';
+import { Card } from 'primereact/card';
 import { useEvents } from '../../queries/useEvent';
+import { useAlertById } from '../../queries/useAlert';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
+import { TabView, TabPanel } from 'primereact/tabview';
+import { ProgressSpinner } from 'primereact/progressspinner';
 
 export default function BasicFilterDemo() {
     const { data: events, isLoading } = useEvents();
     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
+    const [visible, setVisible] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<typeof events[0] | null>(null);
+
+    const { data: relatedAlert, isLoading: alertLoading } = useAlertById(
+        selectedEvent?.alert_id ?? 0
+    );
+    const onRowClick = (event: { data: typeof events[0] }) => {
+        setSelectedEvent(event.data);
+        setVisible(true);
+    };
     const [filters, setFilters] = useState<DataTableFilterMeta>({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         id: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -46,6 +62,8 @@ export default function BasicFilterDemo() {
     //   }
     // };
 
+
+
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         let _filters = { ...filters };
@@ -80,9 +98,11 @@ export default function BasicFilterDemo() {
                 filters={filters}
                 filterDisplay="row"
                 loading={isLoading}
-                globalFilterFields={["name", "status"]}
+                globalFilterFields={["id", "host"]}
                 header={header}
                 emptyMessage="No events found."
+                onRowClick={onRowClick}
+                selectionMode="single"
             >
                 <Column
                     field="id"
@@ -90,7 +110,7 @@ export default function BasicFilterDemo() {
                     sortable
                     filter
                     filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
+                    style={{ minWidth: "10rem" }}
                 />
                 <Column
                     field="implementation"
@@ -107,6 +127,7 @@ export default function BasicFilterDemo() {
                     filter
                     filterPlaceholder=""
                     style={{ minWidth: "12rem" }}
+                    body={(rowData) => new Date(rowData.created_at).toLocaleString()}
                 />
                 <Column
                     field="alert_id"
@@ -204,151 +225,120 @@ export default function BasicFilterDemo() {
                     style={{ minWidth: "12rem" }}
                 />
             </DataTable>
+            <Dialog
+                visible={visible}
+                onHide={() => setVisible(false)}
+                header="Detalles del Evento"
+                style={{ width: '60vw', height: '700px' }}
+                modal
+                className="incident-dialog"
+            >
+                {selectedEvent && (
+                    <TabView className="custom-tabs">
+                        <TabPanel header="Detalles" leftIcon="pi pi-info-circle mr-2">
+                            <div className="grid">
+                                {/* Sección Principal */}
+                                <div className="col-12">
+                                    <Card className="mb-3">
+                                        <div className="flex align-items-center mb-3 w-full">
+                                            <h2 className="text-xl m-0 mr-3">Evento #{selectedEvent.id}</h2>
+                                        </div>
+                                        <div className="grid">
+                                            <div className="col-12 md:col-6">
+                                                <Card className="surface-50">
+                                                    <h3>Información Principal</h3>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Alerta Relacionado:</label>
+                                                        <div>{selectedEvent.alert_id}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">CI:</label>
+                                                        <div>{selectedEvent.host}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Clase:</label>
+                                                        <div>{selectedEvent.sys_class_name}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Implementación:</label>
+                                                        <div>{selectedEvent.implementation}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Dirección IP:</label>
+                                                        <div>{selectedEvent.ïp_monitoring}</div>
+                                                    </div>
+                                                </Card>
+                                            </div>
+                                            <div className="col-12 md:col-6">
+                                                <Card className="surface-50">
+                                                    <h3>Detalles Técnicos</h3>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Descripción:</label>
+                                                        <div>{selectedEvent.summary}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Error:</label>
+                                                        <div>{selectedEvent.category_error}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Tipo:</label>
+                                                        <div>{selectedEvent.type}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Hostgroups:</label>
+                                                        <div>{selectedEvent.hostgroups}</div>
+                                                    </div>
+                                                    <div className="mb-2">
+                                                        <label className="font-bold">Alertgroup:</label>
+                                                        <div>{selectedEvent.alertgroup}</div>
+                                                    </div>
+                                                </Card>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                            </div>
+                        </TabPanel>
+                        <TabPanel header="Alertas Relacionadzs" leftIcon="pi pi-bell mr-2">
+                            <div className="p-4">
+                                {selectedEvent && (
+                                    <div>
+                                        {alertLoading ? (
+                                            <div className="flex align-items-center justify-content-center">
+                                                <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                                            </div>
+                                        ) : (
+                                            <DataTable
+                                                value={relatedAlert || []}
+                                                rows={5}
+                                                className="p-datatable-sm"
+                                            >
+                                                <Column
+                                                    field="id"
+                                                    header="ID Evento"
+                                                    style={{ width: '40%' }}
+                                                />
+                                                <Column
+                                                    field="created_at"
+                                                    header="Fecha Creación"
+                                                    style={{ width: '60%' }}
+                                                    body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                                                />
+                                                <Column
+                                                    field="last_event_date"
+                                                    header="Fecha de Último Evento"
+                                                    style={{ width: '60%' }}
+                                                    body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
+                                                />
+                                            </DataTable>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </TabPanel>
+                    </TabView>
+                )}
+            </Dialog>
         </div>
     );
 }
-
-// export default function BasicFilterDemo() {
-//     const [customers, setCustomers] = useState<Customer[]>([]);
-//     const [filters, setFilters] = useState<DataTableFilterMeta>({
-//         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-//         name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-//         'country.name': { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-//         representative: { value: null, matchMode: FilterMatchMode.IN },
-//         status: { value: null, matchMode: FilterMatchMode.EQUALS },
-//         verified: { value: null, matchMode: FilterMatchMode.EQUALS }
-//     });
-//     const [loading, setLoading] = useState<boolean>(true);
-//     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
-//     const [representatives] = useState<Representative[]>([
-//         { name: 'Amy Elsner', image: 'amyelsner.png' },
-//         { name: 'Anna Fali', image: 'annafali.png' },
-//         { name: 'Asiya Javayant', image: 'asiyajavayant.png' },
-//         { name: 'Bernardo Dominic', image: 'bernardodominic.png' },
-//         { name: 'Elwin Sharvill', image: 'elwinsharvill.png' },
-//         { name: 'Ioni Bowcher', image: 'ionibowcher.png' },
-//         { name: 'Ivan Magalhaes', image: 'ivanmagalhaes.png' },
-//         { name: 'Onyama Limba', image: 'onyamalimba.png' },
-//         { name: 'Stephen Shaw', image: 'stephenshaw.png' },
-//         { name: 'XuXue Feng', image: 'xuxuefeng.png' }
-//     ]);
-//     const [statuses] = useState<string[]>(['unqualified', 'qualified', 'new', 'negotiation', 'renewal']);
-
-//     useEffect(() => {
-//         CustomerService.getCustomersMedium().then((data: Customer[]) => {
-//             setCustomers(getCustomers(data));
-//             setLoading(false);
-//         });
-//     }, []);
-
-//     const getCustomers = (data: Customer[]) => {
-//         return [...(data || [])].map((d) => {
-//             const newDate = new Date(d.date);
-//             d.date = newDate.toString()
-
-//             return d;
-//         });
-//     };
-
-//     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//         const value = e.target.value;
-//         const  _filters = { ...filters };
-//         _filters['global'].value = value;
-//         setFilters(_filters);
-//         setGlobalFilterValue(value);
-//     };
-
-//     const renderHeader = () => {
-//         return (
-//             <div className="flex justify-content-end">
-//                 <IconField iconPosition="left">
-//                     <InputIcon className="pi pi-search" />
-//                     <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Keyword Search" />
-//                 </IconField>
-//             </div>
-//         );
-//     };
-
-//     const countryBodyTemplate = (rowData: Customer) => {
-//         return (
-//             <div className="flex align-items-center gap-2">
-//                 <img alt="flag" src="https://primefaces.org/cdn/primereact/images/flag/flag_placeholder.png" className={`flag flag-${rowData.country.code}`} style={{ width: '24px' }} />
-//                 <span>{rowData.country.name}</span>
-//             </div>
-//         );
-//     };
-
-//     const representativeBodyTemplate = (rowData: Customer) => {
-//         const representative = rowData.representative;
-
-//         return (
-//             <div className="flex align-items-center gap-2">
-//                 <img alt={representative.name} src={`https://primefaces.org/cdn/primereact/images/avatar/${representative.image}`} width="32" />
-//                 <span>{representative.name}</span>
-//             </div>
-//         );
-//     };
-
-//     const representativesItemTemplate = (option: Representative) => {
-//         return (
-//             <div className="flex align-items-center gap-2">
-//                 <img alt={option.name} src={`https://primefaces.org/cdn/primereact/images/avatar/${option.image}`} width="32" />
-//                 <span>{option.name}</span>
-//             </div>
-//         );
-//     };
-
-//     const statusBodyTemplate = (rowData: Customer) => {
-//         return <Tag value={rowData.status} severity={getSeverity(rowData.status)} />;
-//     };
-
-//     const statusItemTemplate = (option: string) => {
-//         return <Tag value={option} severity={getSeverity(option)} />;
-//     };
-
-//     const verifiedBodyTemplate = (rowData: Customer) => {
-//         return <i className={classNames('pi', { 'true-icon pi-check-circle': rowData.verified, 'false-icon pi-times-circle': !rowData.verified })}></i>;
-//     };
-
-//     const representativeRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-//         return (
-//             <MultiSelect
-//                 value={options.value}
-//                 options={representatives}
-//                 itemTemplate={representativesItemTemplate}
-//                 onChange={(e: MultiSelectChangeEvent) => options.filterApplyCallback(e.value)}
-//                 optionLabel="name"
-//                 placeholder="Any"
-//                 className="p-column-filter"
-//                 maxSelectedLabels={1}
-//                 style={{ minWidth: '14rem' }}
-//             />
-//         );
-//     };
-
-//     const statusRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-//         return (
-//             <Dropdown value={options.value} options={statuses} onChange={(e: DropdownChangeEvent) => options.filterApplyCallback(e.value)} itemTemplate={statusItemTemplate} placeholder="Select One" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
-//         );
-//     };
-
-//     const verifiedRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-//         return <TriStateCheckbox value={options.value} onChange={(e: TriStateCheckboxChangeEvent) => options.filterApplyCallback(e.value)} />;
-//     };
-
-//     const header = renderHeader();
-
-//     return (
-//         <div className="card">
-//             <DataTable value={customers} paginator rows={10} dataKey="id" filters={filters} filterDisplay="row" loading={loading}
-//                     globalFilterFields={['name', 'country.name', 'representative.name', 'status']} header={header} emptyMessage="No customers found.">
-//                 <Column field="name" header="Name" filter filterPlaceholder="Search by name" style={{ minWidth: '12rem' }} />
-//                 <Column header="Country" filterField="country.name" style={{ minWidth: '12rem' }} body={countryBodyTemplate} filter filterPlaceholder="Search by country" />
-//                 <Column header="Agent" filterField="representative" showFilterMenu={false} filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '14rem' }}
-//                     body={representativeBodyTemplate} filter filterElement={representativeRowFilterTemplate} />
-//                 <Column field="status" header="Status" showFilterMenu={false} filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={statusBodyTemplate} filter filterElement={statusRowFilterTemplate} />
-//                 <Column field="verified" header="Verified" dataType="boolean" style={{ minWidth: '6rem' }} body={verifiedBodyTemplate} filter filterElement={verifiedRowFilterTemplate} />
-//             </DataTable>
-//         </div>
-//     );
-// }

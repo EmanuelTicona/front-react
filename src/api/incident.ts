@@ -3,12 +3,12 @@ import { API_URL } from "../services";
 import { Incident } from "../interfaces/incident/incident.interface";
 
 export const incident = async (): Promise<Incident[]> => {
-    try {
-        const response = await axios.get(API_URL + 'api/data/incidents');
-        console.log('API Response:', response.data); // Add this to check what's being returned
-        return response.data;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
+    const response = await axios.get(API_URL + 'api/data/incidents');
+    return response.data;
+};
+
+export const incidentById = async (id: number): Promise<Incident[]> => {
+    const response = await axios.get(API_URL + 'api/data/incident/' + id);
+    const incident = response.data?.data ? [response.data.data] : [];
+    return incident;
 };

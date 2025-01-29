@@ -2,14 +2,43 @@ import React, { useState } from 'react';
 import { FilterMatchMode } from 'primereact/api';
 import { DataTable, DataTableFilterMeta } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Dialog } from 'primereact/dialog';
+import { Tag } from 'primereact/tag';
+import { Timeline } from 'primereact/timeline';
+import { Card } from 'primereact/card';
 import { useAlerts } from '../../queries/useAlert';
+import { useIncidentById } from '../../queries/useIncident';
+import { useEventByAlertId } from '../../queries/useEvent';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
+import { TabView, TabPanel } from 'primereact/tabview';
+import { ProgressSpinner } from 'primereact/progressspinner';
 
 export default function BasicFilterDemo() {
   const { data: alerts, isLoading } = useAlerts();
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
+  const [visible, setVisible] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<typeof alerts[0] | null>(null);
+
+  const { data: relatedEvents, isLoading: eventsLoading } = useEventByAlertId(
+    selectedAlert?.id ?? 0
+  );
+
+  type EventType = {
+    id: number;
+    created_at: string;
+    status?: string;
+  };
+
+  const { data: relatedIncident, isLoading: incidentLoading } = useIncidentById(
+    selectedAlert?.incident_id ?? 0
+  );
+
+  const onRowClick = (event: { data: typeof alerts[0] }) => {
+    setSelectedAlert(event.data);
+    setVisible(true);
+  };
   const [filters, setFilters] = useState<DataTableFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     id: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -26,6 +55,23 @@ export default function BasicFilterDemo() {
     status: { value: null, matchMode: FilterMatchMode.CONTAINS },
     summary: { value: null, matchMode: FilterMatchMode.CONTAINS }
   });
+
+  const getStateTag = (state: string) => {
+    const stateColors: Record<string, string> = {
+      'OPEN': 'warning',
+      'RESOLVED': 'success'
+    };
+    return <Tag value={state} severity={stateColors[state.toLowerCase()] || 'info'} />;
+  };
+
+  const getTimelineEvents = (events: EventType[] = []) => {
+    return events.map(event => ({
+      status: event.status || `Evento ${event.id}`,
+      date: new Date(event.created_at).toLocaleString(),
+      icon: 'pi pi-calendar',
+      color: '#03A9F4'
+    }));
+  };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -51,21 +97,6 @@ export default function BasicFilterDemo() {
 
   const header = renderHeader();
 
-  // const getSeverity = (status: string) => {
-  //   switch (status) {
-  //     case "unqualified":
-  //       return "danger";
-  //     case "qualified":
-  //       return "success";
-  //     case "new":
-  //       return "info";
-  //     case "negotiation":
-  //       return "warning";
-  //     case "renewal":
-  //       return null;
-  //   }
-  // };
-
   return (
     <div className="card">
       <DataTable
@@ -76,9 +107,11 @@ export default function BasicFilterDemo() {
         filters={filters}
         filterDisplay="row"
         loading={isLoading}
-        globalFilterFields={["name", "status"]}
+        globalFilterFields={["id", "host"]}
         header={header}
         emptyMessage="No alerts found."
+        onRowClick={onRowClick}
+        selectionMode="single"
       >
         <Column
           field="id"
@@ -111,6 +144,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
         />
         <Column
           field="incident_id"
@@ -127,6 +161,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
         />
         <Column
           field="num_events"
@@ -159,6 +194,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => rowData.resolved_at ? new Date(rowData.resolved_at).toLocaleString() : ''}
         />
         <Column
           field="status"
@@ -176,151 +212,171 @@ export default function BasicFilterDemo() {
           style={{ minWidth: "12rem" }}
         />
       </DataTable>
+      <Dialog
+        visible={visible}
+        onHide={() => setVisible(false)}
+        header="Detalles de la Alerta"
+        style={{ width: '60vw', height: '700px' }}
+        modal
+        className="incident-dialog"
+      >
+        {selectedAlert && (
+          <TabView className="custom-tabs">
+            <TabPanel header="Detalles" leftIcon="pi pi-info-circle mr-2">
+              <div className="grid">
+                {/* Sección Principal */}
+                <div className="col-12">
+                  <Card className="mb-3">
+                    <div className="flex align-items-center mb-3 w-full">
+                      <h2 className="text-xl m-0 mr-3">Alerta #{selectedAlert.id}</h2>
+                      {getStateTag(selectedAlert.state)}
+                    </div>
+                    <div className="grid">
+                      <div className="col-12 md:col-6">
+                        <Card className="surface-50">
+                          <h3>Información Principal</h3>
+                          <div className="mb-2">
+                            <label className="font-bold">Incidente Relacionado:</label>
+                            <div>{selectedAlert.incident_id}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold">CI:</label>
+                            <div>{selectedAlert.host}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold">Clase:</label>
+                            <div>{selectedAlert.sys_class_name}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold">Clave de deduplicación:</label>
+                            <div>{selectedAlert.dedupe_key}</div>
+                          </div>
+                        </Card>
+                      </div>
+                      <div className="col-12 md:col-6">
+                        <Card className="surface-50">
+                          <h3>Detalles Técnicos</h3>
+                          <div className="mb-2">
+                            <label className="font-bold">Descripción:</label>
+                            <div>{selectedAlert.summary}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold">Error:</label>
+                            <div>{selectedAlert.category_error}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold">Número de Eventos:</label>
+                            <Tag value={selectedAlert.num_events.toString()} severity="info" />
+                          </div>
+                        </Card>
+                      </div>
+
+                      {/* Timeline lateral */}
+                      <div className="col-12 md:col-6">
+                        {relatedEvents && relatedEvents.length > 0 && (
+                          <Card className="w-full">
+                            <h3>Línea de Tiempo de Eventos</h3>
+                            <Timeline
+                              className="flex justify-content-start align-content-start"
+                              value={getTimelineEvents(relatedEvents)}
+                              content={(item) => (
+                                <div>
+                                  <small className="text-color-secondary">{item.date}</small>
+                                  <div className="font-bold">{item.status}</div>
+                                </div>
+                              )}
+                            />
+                          </Card>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </TabPanel>
+            <TabPanel header="Eventos Relacionados" leftIcon="pi pi-bell mr-2">
+              <div className="p-4">
+                {selectedAlert && (
+                  <div>
+                    {eventsLoading ? (
+                      <div className="flex align-items-center justify-content-center">
+                        <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                      </div>
+                    ) : (
+                      <DataTable
+                        value={relatedEvents || []}
+                        rows={5}
+                        className="p-datatable-sm"
+                      >
+                        <Column
+                          field="id"
+                          header="ID Evento"
+                          style={{ width: '40%' }}
+                        />
+                        <Column
+                          field="created_at"
+                          header="Fecha Creación"
+                          style={{ width: '60%' }}
+                          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                        />
+                      </DataTable>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabPanel>
+            <TabPanel header="Incidente Relacionado" leftIcon="pi pi-exclamation-triangle mr-2">
+              <div className="p-4">
+                {selectedAlert && (
+                  <div>
+                    {incidentLoading ? (
+                      <div className="flex align-items-center justify-content-center">
+                        <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                      </div>
+                    ) : (
+                      <DataTable
+                        value={relatedIncident || []}
+                        rows={5}
+                        className="p-datatable-sm"
+                      >
+                        <Column
+                          field="id"
+                          header="ID Incidente"
+                          style={{ width: '20%' }}
+                        />
+                        <Column
+                          field="created_at"
+                          header="Fecha Creación"
+                          style={{ width: '20%' }}
+                          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                        />
+                        <Column
+                          field="updated_at"
+                          header="Fecha de Actualización"
+                          style={{ width: '20%' }}
+                          body={(rowData) => new Date(rowData.updated_at).toLocaleString()}
+                        />
+                        <Column
+                          field="resolved_at"
+                          header="Fecha de Resolución"
+                          style={{ width: '20%' }}
+                          body={(rowData) => rowData.resolved_at ? new Date(rowData.resolved_at).toLocaleString() : '-'}
+                        />
+                        <Column
+                          field="reopened_at"
+                          header="Fecha de Reapertura"
+                          style={{ width: '20%' }}
+                          body={(rowData) => rowData.reopened_at ? new Date(rowData.reopened_at).toLocaleString() : '-'}
+                        />
+                      </DataTable>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabPanel>
+          </TabView>
+        )}
+      </Dialog>
     </div>
   );
 }
-
-// export default function BasicFilterDemo() {
-//     const [customers, setCustomers] = useState<Customer[]>([]);
-//     const [filters, setFilters] = useState<DataTableFilterMeta>({
-//         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-//         name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-//         'country.name': { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-//         representative: { value: null, matchMode: FilterMatchMode.IN },
-//         status: { value: null, matchMode: FilterMatchMode.EQUALS },
-//         verified: { value: null, matchMode: FilterMatchMode.EQUALS }
-//     });
-//     const [loading, setLoading] = useState<boolean>(true);
-//     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
-//     const [representatives] = useState<Representative[]>([
-//         { name: 'Amy Elsner', image: 'amyelsner.png' },
-//         { name: 'Anna Fali', image: 'annafali.png' },
-//         { name: 'Asiya Javayant', image: 'asiyajavayant.png' },
-//         { name: 'Bernardo Dominic', image: 'bernardodominic.png' },
-//         { name: 'Elwin Sharvill', image: 'elwinsharvill.png' },
-//         { name: 'Ioni Bowcher', image: 'ionibowcher.png' },
-//         { name: 'Ivan Magalhaes', image: 'ivanmagalhaes.png' },
-//         { name: 'Onyama Limba', image: 'onyamalimba.png' },
-//         { name: 'Stephen Shaw', image: 'stephenshaw.png' },
-//         { name: 'XuXue Feng', image: 'xuxuefeng.png' }
-//     ]);
-//     const [statuses] = useState<string[]>(['unqualified', 'qualified', 'new', 'negotiation', 'renewal']);
-
-//     useEffect(() => {
-//         CustomerService.getCustomersMedium().then((data: Customer[]) => {
-//             setCustomers(getCustomers(data));
-//             setLoading(false);
-//         });
-//     }, []);
-
-//     const getCustomers = (data: Customer[]) => {
-//         return [...(data || [])].map((d) => {
-//             const newDate = new Date(d.date);
-//             d.date = newDate.toString()
-
-//             return d;
-//         });
-//     };
-
-//     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//         const value = e.target.value;
-//         const  _filters = { ...filters };
-//         _filters['global'].value = value;
-//         setFilters(_filters);
-//         setGlobalFilterValue(value);
-//     };
-
-//     const renderHeader = () => {
-//         return (
-//             <div className="flex justify-content-end">
-//                 <IconField iconPosition="left">
-//                     <InputIcon className="pi pi-search" />
-//                     <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Keyword Search" />
-//                 </IconField>
-//             </div>
-//         );
-//     };
-
-//     const countryBodyTemplate = (rowData: Customer) => {
-//         return (
-//             <div className="flex align-items-center gap-2">
-//                 <img alt="flag" src="https://primefaces.org/cdn/primereact/images/flag/flag_placeholder.png" className={`flag flag-${rowData.country.code}`} style={{ width: '24px' }} />
-//                 <span>{rowData.country.name}</span>
-//             </div>
-//         );
-//     };
-
-//     const representativeBodyTemplate = (rowData: Customer) => {
-//         const representative = rowData.representative;
-
-//         return (
-//             <div className="flex align-items-center gap-2">
-//                 <img alt={representative.name} src={`https://primefaces.org/cdn/primereact/images/avatar/${representative.image}`} width="32" />
-//                 <span>{representative.name}</span>
-//             </div>
-//         );
-//     };
-
-//     const representativesItemTemplate = (option: Representative) => {
-//         return (
-//             <div className="flex align-items-center gap-2">
-//                 <img alt={option.name} src={`https://primefaces.org/cdn/primereact/images/avatar/${option.image}`} width="32" />
-//                 <span>{option.name}</span>
-//             </div>
-//         );
-//     };
-
-//     const statusBodyTemplate = (rowData: Customer) => {
-//         return <Tag value={rowData.status} severity={getSeverity(rowData.status)} />;
-//     };
-
-//     const statusItemTemplate = (option: string) => {
-//         return <Tag value={option} severity={getSeverity(option)} />;
-//     };
-
-//     const verifiedBodyTemplate = (rowData: Customer) => {
-//         return <i className={classNames('pi', { 'true-icon pi-check-circle': rowData.verified, 'false-icon pi-times-circle': !rowData.verified })}></i>;
-//     };
-
-//     const representativeRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-//         return (
-//             <MultiSelect
-//                 value={options.value}
-//                 options={representatives}
-//                 itemTemplate={representativesItemTemplate}
-//                 onChange={(e: MultiSelectChangeEvent) => options.filterApplyCallback(e.value)}
-//                 optionLabel="name"
-//                 placeholder="Any"
-//                 className="p-column-filter"
-//                 maxSelectedLabels={1}
-//                 style={{ minWidth: '14rem' }}
-//             />
-//         );
-//     };
-
-//     const statusRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-//         return (
-//             <Dropdown value={options.value} options={statuses} onChange={(e: DropdownChangeEvent) => options.filterApplyCallback(e.value)} itemTemplate={statusItemTemplate} placeholder="Select One" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
-//         );
-//     };
-
-//     const verifiedRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-//         return <TriStateCheckbox value={options.value} onChange={(e: TriStateCheckboxChangeEvent) => options.filterApplyCallback(e.value)} />;
-//     };
-
-//     const header = renderHeader();
-
-//     return (
-//         <div className="card">
-//             <DataTable value={customers} paginator rows={10} dataKey="id" filters={filters} filterDisplay="row" loading={loading}
-//                     globalFilterFields={['name', 'country.name', 'representative.name', 'status']} header={header} emptyMessage="No customers found.">
-//                 <Column field="name" header="Name" filter filterPlaceholder="Search by name" style={{ minWidth: '12rem' }} />
-//                 <Column header="Country" filterField="country.name" style={{ minWidth: '12rem' }} body={countryBodyTemplate} filter filterPlaceholder="Search by country" />
-//                 <Column header="Agent" filterField="representative" showFilterMenu={false} filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '14rem' }}
-//                     body={representativeBodyTemplate} filter filterElement={representativeRowFilterTemplate} />
-//                 <Column field="status" header="Status" showFilterMenu={false} filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={statusBodyTemplate} filter filterElement={statusRowFilterTemplate} />
-//                 <Column field="verified" header="Verified" dataType="boolean" style={{ minWidth: '6rem' }} body={verifiedBodyTemplate} filter filterElement={verifiedRowFilterTemplate} />
-//             </DataTable>
-//         </div>
-//     );
-// }

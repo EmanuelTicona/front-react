@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { incident } from "../api/incident";
+import { incident, incidentById } from "../api/incident";
 import { sortDataDesc } from "../utils/filtered";
 
 export const useIncidents = () => {
@@ -12,3 +12,11 @@ export const useIncidents = () => {
       });
     return info;
 }
+
+export const useIncidentById = (id: number) => {
+  return useQuery({
+    queryKey: ['incident-by-id', id],
+    queryFn: () => incidentById(id),
+    enabled: id > 0,
+  });
+};

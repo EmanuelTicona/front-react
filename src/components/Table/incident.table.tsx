@@ -7,10 +7,12 @@ import { Tag } from 'primereact/tag';
 import { Timeline } from 'primereact/timeline';
 import { Card } from 'primereact/card';
 import { useIncidents } from '../../queries/useIncident';
+import { useAlertByIncidentId } from '../../queries/useAlert';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { TabView, TabPanel } from 'primereact/tabview';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import '../../incidentDetails.css';
 
 
@@ -30,6 +32,10 @@ export default function BasicFilterDemo() {
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
   const [visible, setVisible] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<typeof incidents[0] | null>(null);
+
+  const { data: relatedAlerts, isLoading: alertsLoading } = useAlertByIncidentId(
+    selectedIncident?.id ?? 0
+  );
 
   const onRowClick = (event: { data: typeof incidents[0] }) => {
     setSelectedIncident(event.data);
@@ -59,6 +65,13 @@ export default function BasicFilterDemo() {
     };
     return <Tag value={state} severity={stateColors[state.toLowerCase()] || 'info'} />;
   };
+
+  // const LoadingAlerts = () => (
+  //   <div className="flex align-items-center justify-content-center p-5">
+  //     <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+  //     <span className="ml-3">Cargando alertas relacionadas...</span>
+  //   </div>
+  // );
 
   const getTimelineEvents = (incident: typeof incidents[0]) => {
     const events = [];
@@ -123,7 +136,7 @@ export default function BasicFilterDemo() {
         filters={filters}
         filterDisplay="row"
         loading={isLoading}
-        globalFilterFields={["name", "status"]}
+        globalFilterFields={["id", "host"]}
         header={header}
         emptyMessage="No incidents found."
         onRowClick={onRowClick}
@@ -236,7 +249,7 @@ export default function BasicFilterDemo() {
       >
         {selectedIncident && (
           <TabView className="custom-tabs">
-            <TabPanel header="Detalles" leftIcon="pi pi-info-circle">
+            <TabPanel header="Detalles" leftIcon="pi pi-info-circle mr-2">
               <div className="grid">
                 {/* Sección Principal */}
                 <div className="col-12">
@@ -275,13 +288,13 @@ export default function BasicFilterDemo() {
                             <div>{selectedIncident.external_id}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">Alertas Relacionadas:</label>
+                            <label className="font-bold">Número de Alertas:</label>
                             <Tag value={selectedIncident.num_alerts.toString()} severity="info" />
                           </div>
                         </Card>
                       </div>
                       {/* Notas de Trabajo */}
-                  
+
                       {/* {selectedIncident.work_notes && ( */}
                       <div className="col-12 md:col-6">
                         <Card className="mb-3">
@@ -311,13 +324,44 @@ export default function BasicFilterDemo() {
                       </div>
                     </div>
                   </Card>
+                </div>
               </div>
-            </div>
             </TabPanel>
-            <TabPanel header="Alertas Relacionadas" leftIcon="pi pi-bell">
+            <TabPanel header="Alertas Relacionadas" leftIcon="pi pi-bell mr-2">
               <div className="p-4">
-                {/* Contenido de alertas relacionadas */}
-                <p>Contenido de alertas relacionadas pendiente</p>
+                {selectedIncident && (
+                  <div>
+                    {alertsLoading ? (
+                      <div className="flex align-items-center justify-content-center">
+                        <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                      </div>
+                    ) : (
+                      <DataTable
+                        value={relatedAlerts || []}
+                        rows={5}
+                        className="p-datatable-sm"
+                      >
+                        <Column
+                          field="id"
+                          header="ID Alerta"
+                          style={{ width: '20%' }}
+                        />
+                        <Column
+                          field="created_at"
+                          header="Fecha Creación"
+                          style={{ width: '40%' }}
+                          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                        />
+                        <Column
+                          field="last_event_date"
+                          header="Último Evento"
+                          style={{ width: '40%' }}
+                          body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
+                        />
+                      </DataTable>
+                    )}
+                  </div>
+                )}
               </div>
             </TabPanel>
           </TabView>
