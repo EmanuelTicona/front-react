@@ -165,6 +165,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
         />
         <Column
           field="external_id"
@@ -221,6 +222,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.updated_at).toLocaleString()}
         />
         <Column
           field="reopened_at"
@@ -229,6 +231,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.reopened_at).toLocaleString()}
         />
         <Column
           field="resolved_at"
@@ -237,6 +240,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.resolved_at).toLocaleString()}
         />
       </DataTable>
       <Dialog
@@ -255,40 +259,40 @@ export default function BasicFilterDemo() {
                 <div className="col-12">
                   <Card className="mb-3">
                     <div className="flex align-items-center mb-3 w-full">
-                      <h2 className="text-xl m-0 mr-3">Incidente #{selectedIncident.id}</h2>
+                      <h2 className="text-xl m-0 mr-3 text-gray-900">Incidente #{selectedIncident.id}</h2>
                       {getStateTag(selectedIncident.state)}
                     </div>
                     <div className="grid">
                       <div className="col-12 md:col-6">
                         <Card className="surface-50">
-                          <h3>Información Principal</h3>
+                          <h3 className="text-gray-900">Información Principal</h3>
                           <div className="mb-2">
-                            <label className="font-bold">Host:</label>
+                            <label className="font-bold text-gray-900">Host:</label>
                             <div>{selectedIncident.host}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">Grupo Asignado:</label>
+                            <label className="font-bold text-gray-900">Grupo Asignado:</label>
                             <div>{selectedIncident.assigned_group}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">Grupos de Host:</label>
+                            <label className="font-bold text-gray-900">Grupos de Host:</label>
                             <div>{selectedIncident.hostgroups}</div>
                           </div>
                         </Card>
                       </div>
                       <div className="col-12 md:col-6">
                         <Card className="surface-50">
-                          <h3>Detalles Técnicos</h3>
+                          <h3 className='text-gray-900'>Detalles Técnicos</h3>
                           <div className="mb-2">
-                            <label className="font-bold">Clase:</label>
+                            <label className="font-bold text-gray-900">Clase:</label>
                             <div>{selectedIncident.sys_class_name}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">ID Externo:</label>
+                            <label className="font-bold text-gray-900">ID Externo:</label>
                             <div>{selectedIncident.external_id}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">Número de Alertas:</label>
+                            <label className="font-bold text-gray-900">Número de Alertas:</label>
                             <Tag value={selectedIncident.num_alerts.toString()} severity="info" />
                           </div>
                         </Card>
@@ -298,30 +302,19 @@ export default function BasicFilterDemo() {
                       {/* {selectedIncident.work_notes && ( */}
                       <div className="col-12 md:col-6">
                         <Card className="mb-3">
-                          <h3>Notas de Trabajo</h3>
+                          <h3 className='text-gray-900'>Notas de Trabajo</h3>
                           <div className="surface-50 p-3 border-round">
-                            KK de perro{/* {selectedIncident.work_notes} */}
+                            {selectedIncident.work_notes &&
+                              selectedIncident.work_notes
+                                .split('\n') // Divide el texto en líneas
+                                .filter((note) => note.trim() !== '') // Filtra las cadenas vacías
+                                .map((note, index) => (
+                                  <p key={index}>- {note}</p> // Agrega un guion a cada línea
+                                ))}
                           </div>
                         </Card>
                       </div>
                       {/* )} */}
-
-                      {/* Timeline lateral */}
-                      <div className="col-12 md:col-6">
-                        <Card className="w-full">
-                          <h3>Línea de Tiempo</h3>
-                          <Timeline
-                            className='flex justify-content-start align-content-start'
-                            value={getTimelineEvents(selectedIncident)}
-                            content={(item) => (
-                              <div>
-                                <small className="text-color-secondary">{item.date}</small>
-                                <div className="font-bold">{item.status}</div>
-                              </div>
-                            )}
-                          />
-                        </Card>
-                      </div>
                     </div>
                   </Card>
                 </div>
@@ -344,19 +337,34 @@ export default function BasicFilterDemo() {
                         <Column
                           field="id"
                           header="ID Alerta"
-                          style={{ width: '20%' }}
+                          style={{ width: '10%' }}
                         />
                         <Column
                           field="created_at"
                           header="Fecha Creación"
-                          style={{ width: '40%' }}
+                          style={{ width: '10%' }}
                           body={(rowData) => new Date(rowData.created_at).toLocaleString()}
                         />
                         <Column
                           field="last_event_date"
                           header="Último Evento"
-                          style={{ width: '40%' }}
+                          style={{ width: '10%' }}
                           body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
+                        />
+                        <Column
+                          field="host"
+                          header="CI"
+                          style={{ width: '10%' }}
+                        />
+                        <Column
+                          field="summary"
+                          header="Descripción"
+                          style={{ width: '30%' }}
+                        />
+                        <Column
+                          field="category_error"
+                          header="Error"
+                          style={{ width: '10%' }}
                         />
                       </DataTable>
                     )}

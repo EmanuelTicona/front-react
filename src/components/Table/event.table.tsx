@@ -47,21 +47,14 @@ export default function BasicFilterDemo() {
         type: { value: null, matchMode: FilterMatchMode.CONTAINS },
     });
 
-    // const getSeverity = (status: string) => {
-    //   switch (status) {
-    //     case "unqualified":
-    //       return "danger";
-    //     case "qualified":
-    //       return "success";a
-    //     case "new":
-    //       return "info";
-    //     case "negotiation":
-    //       return "warning";
-    //     case "renewal":
-    //       return null;
-    //   }
-    // };
-
+    const getStateTag = (state: string) => {
+        const stateColors: Record<string, string> = {
+            'critical': 'danger',
+            'warning': 'warning',
+            'ok': 'success'
+        };
+        return <Tag value={state} severity={stateColors[state.toLowerCase()] || 'info'} />;
+    };
 
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,56 +234,65 @@ export default function BasicFilterDemo() {
                                 <div className="col-12">
                                     <Card className="mb-3">
                                         <div className="flex align-items-center mb-3 w-full">
-                                            <h2 className="text-xl m-0 mr-3">Evento #{selectedEvent.id}</h2>
+                                            <h2 className="text-xl m-0 mr-3 text-gray-900">Evento #{selectedEvent.id}</h2>
+                                            {getStateTag(selectedEvent.status)}
                                         </div>
                                         <div className="grid">
                                             <div className="col-12 md:col-6">
                                                 <Card className="surface-50">
-                                                    <h3>Información Principal</h3>
+                                                    <h3 className='text-gray-900'>Información Principal</h3>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Alerta Relacionado:</label>
+                                                        <label className="font-bold text-gray-900">Alerta Relacionado:</label>
                                                         <div>{selectedEvent.alert_id}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">CI:</label>
+                                                        <label className="font-bold text-gray-900">CI:</label>
                                                         <div>{selectedEvent.host}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Clase:</label>
+                                                        <label className="font-bold text-gray-900">Clase:</label>
                                                         <div>{selectedEvent.sys_class_name}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Implementación:</label>
+                                                        <label className="font-bold text-gray-900">Implementación:</label>
                                                         <div>{selectedEvent.implementation}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Dirección IP:</label>
-                                                        <div>{selectedEvent.ïp_monitoring}</div>
+                                                        <label className="font-bold text-gray-900">Dirección IP:</label>
+                                                        <div>{selectedEvent.ip_monitoring}</div>
                                                     </div>
                                                 </Card>
                                             </div>
                                             <div className="col-12 md:col-6">
                                                 <Card className="surface-50">
-                                                    <h3>Detalles Técnicos</h3>
+                                                    <h3 className='text-gray-900'>Detalles Técnicos</h3>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Descripción:</label>
+                                                        <label className="font-bold text-gray-900">Descripción:</label>
                                                         <div>{selectedEvent.summary}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Error:</label>
+                                                        <label className="font-bold text-gray-900">Error:</label>
                                                         <div>{selectedEvent.category_error}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Tipo:</label>
+                                                        <label className="font-bold text-gray-900">Tipo:</label>
                                                         <div>{selectedEvent.type}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Hostgroups:</label>
+                                                        <label className="font-bold text-gray-900">Hostgroups:</label>
                                                         <div>{selectedEvent.hostgroups}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold">Alertgroup:</label>
+                                                        <label className="font-bold text-gray-900">Alertgroup:</label>
                                                         <div>{selectedEvent.alertgroup}</div>
+                                                    </div>
+                                                </Card>
+                                            </div>
+                                            <div className="col-12 md:col-6">
+                                                <Card className="surface-50">
+                                                    <h3 className='text-gray-900'>Payload Inicial</h3>
+                                                    <div className="mb-2">
+                                                        <div>{selectedEvent.payload}</div>
                                                     </div>
                                                 </Card>
                                             </div>
@@ -315,7 +317,7 @@ export default function BasicFilterDemo() {
                                             >
                                                 <Column
                                                     field="id"
-                                                    header="ID Evento"
+                                                    header="ID Alerta"
                                                     style={{ width: '20%' }}
                                                 />
                                                 <Column

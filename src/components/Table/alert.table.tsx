@@ -29,6 +29,7 @@ export default function BasicFilterDemo() {
     id: number;
     created_at: string;
     status?: string;
+    host?: string;
   };
 
   const { data: relatedIncident, isLoading: incidentLoading } = useIncidentById(
@@ -67,6 +68,7 @@ export default function BasicFilterDemo() {
   const getTimelineEvents = (events: EventType[] = []) => {
     return events.map(event => ({
       status: event.status || `Evento ${event.id}`,
+      host: event.host || `Evento ${event.id}`,
       date: new Date(event.created_at).toLocaleString(),
       icon: 'pi pi-calendar',
       color: '#03A9F4'
@@ -228,54 +230,36 @@ export default function BasicFilterDemo() {
                 <div className="col-12">
                   <Card className="mb-3">
                     <div className="flex align-items-center mb-3 w-full">
-                      <h2 className="text-xl m-0 mr-3">Alerta #{selectedAlert.id}</h2>
+                      <h2 className="text-xl m-0 mr-3 text-gray-900">Alerta #{selectedAlert.id}</h2>
                       {getStateTag(selectedAlert.state)}
                     </div>
                     <div className="grid">
                       <div className="col-12 md:col-6">
                         <Card className="surface-50">
-                          <h3>Información Principal</h3>
+                          <h3 className='text-gray-900'>Información Principal</h3>
                           <div className="mb-2">
-                            <label className="font-bold">Incidente Relacionado:</label>
+                            <label className="font-bold text-gray-900">Incidente Relacionado:</label>
                             <div>{selectedAlert.incident_id}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">CI:</label>
+                            <label className="font-bold text-gray-900">CI:</label>
                             <div>{selectedAlert.host}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">Clase:</label>
+                            <label className="font-bold text-gray-900">Clase:</label>
                             <div>{selectedAlert.sys_class_name}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold">Clave de deduplicación:</label>
+                            <label className="font-bold text-gray-900">Clave de deduplicación:</label>
                             <div>{selectedAlert.dedupe_key}</div>
                           </div>
                         </Card>
                       </div>
-                      <div className="col-12 md:col-6">
-                        <Card className="surface-50">
-                          <h3>Detalles Técnicos</h3>
-                          <div className="mb-2">
-                            <label className="font-bold">Descripción:</label>
-                            <div>{selectedAlert.summary}</div>
-                          </div>
-                          <div className="mb-2">
-                            <label className="font-bold">Error:</label>
-                            <div>{selectedAlert.category_error}</div>
-                          </div>
-                          <div className="mb-2">
-                            <label className="font-bold">Número de Eventos:</label>
-                            <Tag value={selectedAlert.num_events.toString()} severity="info" />
-                          </div>
-                        </Card>
-                      </div>
-
                       {/* Timeline lateral */}
                       <div className="col-12 md:col-6">
                         {relatedEvents && relatedEvents.length > 0 && (
                           <Card className="w-full">
-                            <h3>Línea de Tiempo de Eventos</h3>
+                            <h3 className='text-gray-900'>Línea de Tiempo de Eventos</h3>
                             <Timeline
                               className="flex justify-content-start align-content-start"
                               value={getTimelineEvents(relatedEvents)}
@@ -283,12 +267,32 @@ export default function BasicFilterDemo() {
                                 <div>
                                   <small className="text-color-secondary">{item.date}</small>
                                   <div className="font-bold">{item.status}</div>
+                                  <div className="font-bold">{item.host}</div>
                                 </div>
                               )}
                             />
                           </Card>
                         )}
                       </div>
+                      <div className="col-12 md:col-6">
+                        <Card className="surface-50">
+                          <h3 className='text-gray-900'>Detalles Técnicos</h3>
+                          <div className="mb-2">
+                            <label className="font-bold text-gray-900">Descripción:</label>
+                            <div>{selectedAlert.summary}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold text-gray-900">Error:</label>
+                            <div>{selectedAlert.category_error}</div>
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold text-gray-900">Número de Eventos:</label>
+                            <Tag value={selectedAlert.num_events.toString()} severity="info" />
+                          </div>
+                        </Card>
+                      </div>
+
+                      
                     </div>
                   </Card>
                 </div>
@@ -311,12 +315,27 @@ export default function BasicFilterDemo() {
                         <Column
                           field="id"
                           header="ID Evento"
-                          style={{ width: '40%' }}
+                          style={{ width: '20%' }}
+                        />
+                        <Column
+                          field="category_error"
+                          header="Error"
+                          style={{ width: '20%' }}
+                        />
+                        <Column
+                          field="ip_monitoring"
+                          header="Dirección IP"
+                          style={{ width: '20%' }}
+                        />
+                        <Column
+                          field="status"
+                          header="Estado"
+                          style={{ width: '20%' }}
                         />
                         <Column
                           field="created_at"
                           header="Fecha Creación"
-                          style={{ width: '60%' }}
+                          style={{ width: '20%' }}
                           body={(rowData) => new Date(rowData.created_at).toLocaleString()}
                         />
                       </DataTable>
