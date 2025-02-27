@@ -80,6 +80,11 @@ const demoTheme = extendTheme({
         paper: {
           backgroundColor: '#f20024',
           color: '#fff',
+          width: 280, // Ancho expandido
+          transition: 'width 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms !important',
+          '&.MuiDrawer-paperAnchorDockedLeft': {
+            width: 80 // Ancho contraído
+          }
         },
       },
     },
@@ -130,8 +135,8 @@ const demoTheme = extendTheme({
         },
         maxWidthLg: {
           margin: '0 auto',
-          maxWidth: '90% !important',
-          padding: '0 1.5em !important',
+          maxWidth: '95% !important',
+          padding: '0 !important',
         },
       },
     },
@@ -223,7 +228,7 @@ export default function DashboardLayoutBasic(props: any) {
       theme={demoTheme}
       window={demoWindow}
     >
-      <DashboardLayout>
+      <DashboardLayout sidebarExpandedWidth={230}>
         <PageContainer>
           {CONTENT_MAP[router.pathname] || <div>Selecciona una opción del menú</div>}
         </PageContainer>
