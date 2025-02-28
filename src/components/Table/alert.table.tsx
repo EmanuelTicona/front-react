@@ -101,6 +101,7 @@ export default function BasicFilterDemo() {
 
   return (
     <div className="card">
+      <div className="card" style={{ height: "1000px", display: "flex", flexDirection: "column" }}>
       <DataTable
         value={alerts || []}
         paginator
@@ -114,6 +115,9 @@ export default function BasicFilterDemo() {
         emptyMessage="No alerts found."
         onRowClick={onRowClick}
         selectionMode="single"
+        scrollable
+        scrollHeight="flex" // Esto permite que la tabla ocupe el espacio restante
+        style={{ flex: 1 }} // Hace que la tabla ocupe el espacio disponible
       >
         <Column
           field="id"
@@ -214,6 +218,7 @@ export default function BasicFilterDemo() {
           style={{ minWidth: "12rem" }}
         />
       </DataTable>
+      </div>
       <Dialog
         visible={visible}
         onHide={() => setVisible(false)}

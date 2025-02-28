@@ -83,141 +83,146 @@ export default function BasicFilterDemo() {
 
     return (
         <div className="card">
-            <DataTable
-                value={events || []}
-                paginator
-                rows={10}
-                dataKey="id"
-                filters={filters}
-                filterDisplay="row"
-                loading={isLoading}
-                globalFilterFields={["id", "host"]}
-                header={header}
-                emptyMessage="No events found."
-                onRowClick={onRowClick}
-                selectionMode="single"
-            >
-                <Column
-                    field="id"
-                    header="id"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "10rem" }}
-                />
-                <Column
-                    field="implementation"
-                    header="implementation"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="created_at"
-                    header="created_at"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                    body={(rowData) => new Date(rowData.created_at).toLocaleString()}
-                />
-                <Column
-                    field="alert_id"
-                    header="alert_id"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="alertgroup"
-                    header="alertgroup"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="host"
-                    header="host"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="sys_class_name"
-                    header="sys_class_name"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="category_error"
-                    header="category_error"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="check"
-                    header="check"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="hostgroups"
-                    header="hostgroups"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="ip_monitoring"
-                    header="ip_monitoring"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="service_desc"
-                    header="service_desc"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="status"
-                    header="status"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="summary"
-                    header="summary"
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-                <Column
-                    field="type"
-                    header="type"
-                    sortable
-                    filter
-                    filterPlaceholder=""
-                    style={{ minWidth: "12rem" }}
-                />
-            </DataTable>
+            <div className="card" style={{ height: "1000px", display: "flex", flexDirection: "column" }}>
+                <DataTable
+                    value={events || []}
+                    paginator
+                    rows={10}
+                    dataKey="id"
+                    filters={filters}
+                    filterDisplay="row"
+                    loading={isLoading}
+                    globalFilterFields={["id", "host"]}
+                    header={header}
+                    emptyMessage="No events found."
+                    onRowClick={onRowClick}
+                    selectionMode="single"
+                    scrollable
+                    scrollHeight="flex" // Esto permite que la tabla ocupe el espacio restante
+                    style={{ flex: 1 }} // Hace que la tabla ocupe el espacio disponible
+                >
+                    <Column
+                        field="id"
+                        header="id"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "10rem" }}
+                    />
+                    <Column
+                        field="implementation"
+                        header="implementation"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="created_at"
+                        header="created_at"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                        body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                    />
+                    <Column
+                        field="alert_id"
+                        header="alert_id"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="alertgroup"
+                        header="alertgroup"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="host"
+                        header="host"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="sys_class_name"
+                        header="sys_class_name"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="category_error"
+                        header="category_error"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="check"
+                        header="check"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="hostgroups"
+                        header="hostgroups"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="ip_monitoring"
+                        header="ip_monitoring"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="service_desc"
+                        header="service_desc"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="status"
+                        header="status"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="summary"
+                        header="summary"
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                    <Column
+                        field="type"
+                        header="type"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                    />
+                </DataTable>
+            </div>
             <Dialog
                 visible={visible}
                 onHide={() => setVisible(false)}

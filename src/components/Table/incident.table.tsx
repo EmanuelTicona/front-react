@@ -128,6 +128,7 @@ export default function BasicFilterDemo() {
 
   return (
     <div className="card">
+      <div className="card" style={{ height: "1000px", display: "flex", flexDirection: "column" }}>
       <DataTable
         value={incidents || []}
         paginator
@@ -141,6 +142,8 @@ export default function BasicFilterDemo() {
         emptyMessage="No incidents found."
         onRowClick={onRowClick}
         selectionMode="single"
+        scrollHeight="flex" // Esto permite que la tabla ocupe el espacio restante
+        style={{ flex: 1 }} // Hace que la tabla ocupe el espacio disponible
       >
         <Column
           field="id"
@@ -243,6 +246,7 @@ export default function BasicFilterDemo() {
           body={(rowData) => new Date(rowData.resolved_at).toLocaleString()}
         />
       </DataTable>
+      </div>
       <Dialog
         visible={visible}
         onHide={() => setVisible(false)}
