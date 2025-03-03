@@ -251,7 +251,7 @@ export default function BasicFilterDemo() {
         visible={visible}
         onHide={() => setVisible(false)}
         header="Detalles del Incidente"
-        style={{ width: '60vw', height: '700px' }}
+        style={{ width: '60vw', height: '500px' }}
         modal
         className="incident-dialog"
       >
