@@ -10,6 +10,8 @@ import { PageContainer } from '@toolpad/core/PageContainer';
 import IncidentTable from '../Table/incident.table';
 import AlertTable from '../Table/alert.table';
 import EventTable from '../Table/event.table';
+import IntegrationTable from '../Table/integration.table';
+import ImplementationTable from '../Table/implementation.table';
 import TivitRedLogo from '../../assets/tivit-red-logo-2.png';
 
 const NAVIGATION: Navigation = [
@@ -43,6 +45,20 @@ const NAVIGATION: Navigation = [
     segment: 'events',
     title: 'Eventos',
     icon: <NetworkPingIcon sx={{ color: 'white !important' }}/>,
+  },
+  {
+    kind: 'header',
+    title: 'Configruación',
+  },
+  {
+    segment: 'integrations',
+    title: 'Integraciones',
+    icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
+  },
+  {
+    segment: 'implementations',
+    title: 'Implementaciones',
+    icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
   },
 ];
 
@@ -169,7 +185,9 @@ const CONTENT_MAP: Record<string, JSX.Element> = {
   '/dashboard': <OrdersContent/>,
   '/incidents': <IncidentTable />,
   '/alerts': <AlertTable />,
-  '/events': <EventTable />
+  '/events': <EventTable />,
+  '/integrations': <IntegrationTable />,
+  '/implementations': <ImplementationTable />,
 };
 /* Pantallas */
 
