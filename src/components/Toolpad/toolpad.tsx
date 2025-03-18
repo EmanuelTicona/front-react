@@ -12,6 +12,8 @@ import AlertTable from '../Table/alert.table';
 import EventTable from '../Table/event.table';
 import IntegrationTable from '../Table/integration.table';
 import ImplementationTable from '../Table/implementation.table';
+import WorkaroundTable from '../Table/workaround.table';
+import PipelineTable from '../Table/pipeline.table';
 import TivitRedLogo from '../../assets/tivit-red-logo-2.png';
 
 const NAVIGATION: Navigation = [
@@ -48,7 +50,7 @@ const NAVIGATION: Navigation = [
   },
   {
     kind: 'header',
-    title: 'Configruación',
+    title: 'Configuración',
   },
   {
     segment: 'integrations',
@@ -58,6 +60,20 @@ const NAVIGATION: Navigation = [
   {
     segment: 'implementations',
     title: 'Implementaciones',
+    icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
+  },
+  {
+    kind: 'header',
+    title: 'Workaround',
+  },
+  {
+    segment: 'workarounds',
+    title: 'Workarounds',
+    icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
+  },
+  {
+    segment: 'pipelines',
+    title: 'Pipelines',
     icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
   },
 ];
@@ -188,6 +204,8 @@ const CONTENT_MAP: Record<string, JSX.Element> = {
   '/events': <EventTable />,
   '/integrations': <IntegrationTable />,
   '/implementations': <ImplementationTable />,
+  '/workarounds': <WorkaroundTable />,
+  '/pipelines': <PipelineTable />,
 };
 /* Pantallas */
 

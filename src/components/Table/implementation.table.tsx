@@ -11,7 +11,10 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Dropdown } from 'primereact/dropdown';
-import { useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook, useGroupMappings, useAddGroupMapping, useDeleteGroupMapping } from '../../queries/useImplementation';
+import {
+  useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook,
+  useGroupMappings, useAddGroupMapping, useDeleteGroupMapping, useAddStructure, useDeleteStructure, useEditStructure, useGetWebhookToken
+} from '../../queries/useImplementation';
 import { useCompaniesList } from '../../queries/useCompany';
 import { useGroupsList } from '../../queries/useGroup';
 import { useIntegrations } from '../../queries/useIntegration';
@@ -29,6 +32,9 @@ export default function ImplementationComponent() {
   const deleteWebhookMutation = useDeleteWebhook();
   const addGroupMappingMutation = useAddGroupMapping();
   const deleteGroupMappingMutation = useDeleteGroupMapping();
+  const addStructureMutation = useAddStructure();
+  const editStructureMutation = useEditStructure();
+  const deleteStructureMutation = useDeleteStructure();
   const queryClient = useQueryClient();
 
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
@@ -37,7 +43,13 @@ export default function ImplementationComponent() {
   const [updatedGroupField, setUpdatedGroupField] = useState<string>('');
   const [isCreateDialogVisible, setIsCreateDialogVisible] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [isAddStructureDialogVisible, setIsAddStructureDialogVisible] = useState(false);
+  const [isEditStructureDialogVisible, setIsEditStructureDialogVisible] = useState(false);
   const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
+  const [jsonFile, setJsonFile] = useState<File | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const getWebhookToken = useGetWebhookToken();
   const [newWebhookData, setNewWebhookData] = useState({
     webhook_name: '',
     integration_id: null as number | null,
@@ -78,6 +90,19 @@ export default function ImplementationComponent() {
     setGlobalFilterValue(value);
   };
 
+  const fetchToken = async () => {
+    try {
+      const response = await getWebhookToken.mutateAsync(selectedImplementation.service_name);
+      if (response.success) {
+        setToken(response.token || "");
+      } else {
+        console.error("Error fetching token:", response.error);
+      }
+    } catch (error) {
+      console.error("Error fetching webhook token:", error);
+    }
+  };
+
   const handleSaveGroupField = () => {
     if (selectedImplementation) {
       editGroupFieldMutation.mutate(
@@ -92,6 +117,55 @@ export default function ImplementationComponent() {
     }
   };
 
+  const handleAddStructure = () => {
+    if (jsonFile && selectedImplementation) {
+      addStructureMutation.mutate(
+        { implementationId: selectedImplementation.id, file: jsonFile },
+        {
+          onSuccess: () => {
+            setIsAddStructureDialogVisible(false);
+            setJsonFile(null); // Reset file input
+            toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Estructura agregada correctamente', life: 3000 });
+
+            // Actualizar la caché de React Query
+            queryClient.invalidateQueries({ queryKey: ['implementations-repo'] });
+          },
+        }
+      );
+    }
+  };
+
+  const handleEditStructure = () => {
+    if (jsonFile && selectedImplementation) {
+      editStructureMutation.mutate(
+        { implementationId: selectedImplementation.id, file: jsonFile },
+        {
+          onSuccess: () => {
+            setIsEditStructureDialogVisible(false);
+            setJsonFile(null); // Reset file input
+            toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Estructura editada correctamente', life: 3000 });
+
+            // Actualizar la caché de React Query
+            queryClient.invalidateQueries({ queryKey: ['implementations-repo'] });
+          },
+        }
+      );
+    }
+  };
+
+  const handleDeleteStructure = () => {
+    if (selectedImplementation) {
+      deleteStructureMutation.mutate(selectedImplementation.id, {
+        onSuccess: () => {
+          toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Estructura eliminada correctamente', life: 3000 });
+
+          // Actualizar la caché de React Query
+          queryClient.invalidateQueries({ queryKey: ['implementations-repo'] });
+        },
+      });
+    }
+  };
+
   const handleCreateWebhook = () => {
     createWebhookMutation.mutate(newWebhookData, {
       onSuccess: () => {
@@ -100,8 +174,14 @@ export default function ImplementationComponent() {
         toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Webhook creado correctamente', life: 3000 });
         queryClient.invalidateQueries({ queryKey: ['implementations'] }); // Refrescar datos
       },
-      onError: () => {
-        toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Error al crear el webhook', life: 3000 });
+      onError: (error) => {
+        let errorMessage = 'Error al crear el webhook';
+        
+        if (error.response && error.response.data && error.response.data.error) {
+          errorMessage = error.response.data.error; // Capturar mensaje del backend
+        }
+        
+        toast.current?.show({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
       },
     });
   };
@@ -174,7 +254,8 @@ export default function ImplementationComponent() {
 
   // Opciones para el Dropdown de compañías
   const companyOptions = companies
-    ?.sort((a, b) => {
+    ?.filter(company => company.parent !== null) // Filtra solo las empresas que tienen parent
+    .sort((a, b) => {
       // Primero las compañías sin parent (padres)
       if (a.parent === null && b.parent !== null) return -1;
       if (a.parent !== null && b.parent === null) return 1;
@@ -249,13 +330,13 @@ export default function ImplementationComponent() {
                     </div>
                     <div className="grid">
                       <div className="col-12 md:col-6">
-                        <Card className="surface-50">
-                          <h3 className="text-gray-900">Información Principal</h3>
-                          <div className="mb-2">
-                            <label className="font-bold text-gray-900">Nombre:</label>
-                            <div>{selectedImplementation.name}</div>
-                          </div>
-                          <div className="mb-2">
+                          <Card className="surface-50">
+                            <h3 className="text-gray-900">Información Principal</h3>
+                            <div className="mb-2">
+                              <label className="font-bold text-gray-900">Nombre:</label>
+                              <div>{selectedImplementation.name}</div>
+                            </div>
+                            <div className="mb-2">
                             <label className="font-bold text-gray-900">Servicio:</label>
                             <div>{selectedImplementation.service_name}</div>
                           </div>
@@ -271,8 +352,56 @@ export default function ImplementationComponent() {
                             <label className="font-bold text-gray-900">URL:</label>
                             <div>{selectedImplementation.url}</div>
                           </div>
+                          <div className="mb-2 flex items-center">
+                            <label className="font-bold text-gray-900 mr-2">Token:</label>
+                            <div className="bg-gray-200 p-2 rounded text-gray-700">
+                              {token ? (isRevealed ? token : "••••••••••") : "No disponible"}
+                            </div>
+                            <Button className="ml-2" onClick={() => {
+                              if (!token) {
+                                fetchToken();
+                              } else {
+                                setIsRevealed(!isRevealed);
+                              }
+                            }}>
+                              {token ? (isRevealed ? "Ocultar" : "Ver Token") : "Obtener Token"}
+                            </Button>
+                          </div>
+                        </Card>
+                        {/* Card para la estructura */}
+                        <Card className="mb-3" style={{ flex: 1 }}>
+                          <h3 className="text-gray-900">Estructura</h3>
+                          {selectedImplementation.structure_data ? (
+                            <pre>{JSON.stringify(selectedImplementation.structure_data, null, 2)}</pre>
+                          ) : (
+                            <p>No hay estructura definida.</p>
+                          )}
                         </Card>
                       </div>
+                    </div>
+                    <div className="flex justify-content-end mt-3">
+                      {selectedImplementation.structure_data ? (
+                        <>
+                          <Button
+                            label="Editar Estructura"
+                            icon="pi pi-pencil"
+                            className="p-button-warning mr-2"
+                            onClick={() => setIsEditStructureDialogVisible(true)}
+                          />
+                          <Button
+                            label="Eliminar Estructura"
+                            icon="pi pi-trash"
+                            className="p-button-danger"
+                            onClick={handleDeleteStructure}
+                          />
+                        </>
+                      ) : (
+                        <Button
+                          label="Agregar Estructura"
+                          icon="pi pi-plus"
+                          onClick={() => setIsAddStructureDialogVisible(true)}
+                        />
+                      )}
                     </div>
                   </Card>
                 </div>
@@ -345,6 +474,48 @@ export default function ImplementationComponent() {
         )}
       </Dialog>
 
+      {/* Diálogo para agregar estructura */}
+      <Dialog
+        visible={isAddStructureDialogVisible}
+        onHide={() => setIsAddStructureDialogVisible(false)}
+        header="Agregar Estructura"
+        style={{ width: '50vw' }}
+        modal
+      >
+        <div className="p-fluid">
+          <div className="p-field">
+            <label htmlFor="jsonFile">Subir archivo JSON</label>
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
+            />
+          </div>
+          <Button label="Guardar" onClick={handleAddStructure} />
+        </div>
+      </Dialog>
+
+      {/* Diálogo para editar estructura */}
+      <Dialog
+        visible={isEditStructureDialogVisible}
+        onHide={() => setIsEditStructureDialogVisible(false)}
+        header="Editar Estructura"
+        style={{ width: '50vw' }}
+        modal
+      >
+        <div className="p-fluid">
+          <div className="p-field">
+            <label htmlFor="jsonFile">Subir archivo JSON</label>
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
+            />
+          </div>
+          <Button label="Guardar" onClick={handleEditStructure} />
+        </div>
+      </Dialog>
+
       {/* Diálogo para crear un webhook */}
       <Dialog
         visible={isCreateDialogVisible}
@@ -377,19 +548,7 @@ export default function ImplementationComponent() {
             <Dropdown
               id="company_id"
               value={newWebhookData.company_id}
-              options={
-                companies
-                  ?.sort((a, b) => {
-                    // Primero las compañías sin parent (padres)
-                    if (a.parent === null && b.parent !== null) return -1;
-                    if (a.parent !== null && b.parent === null) return 1;
-                    return 0;
-                  })
-                  .map((c) => ({
-                    label: c.parent ? `${companyMap[c.parent]} - ${c.name}` : c.name, // Formato: "parent - company" o solo "company"
-                    value: c.id,
-                  })) || []
-              }
+              options={companyOptions} // Usa las opciones filtradas
               onChange={(e) => setNewWebhookData({ ...newWebhookData, company_id: e.value })}
               placeholder="Selecciona una compañía"
             />

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getImplementations, editImplementationGroupField, createWebhook, deleteWebhook, getGroupMappings, addGroupMapping, deleteGroupMapping } from "../api/implementation";
+import { getImplementations, editImplementationGroupField, createWebhook, deleteWebhook, 
+    getGroupMappings, addGroupMapping, deleteGroupMapping, addStructure, editStructure, deleteStructure, getWebhookToken  } from "../api/implementation";
 import { CreateWebhookData } from './../interfaces/implementation/implementation.interface';
 
 // Hook para obtener todas las implementaciones
@@ -80,4 +81,54 @@ export const useDeleteGroupMapping = () => {
             queryClient.invalidateQueries({ queryKey: ['group-mappings'] });
         },
     });
+};
+
+// Hook para agregar una estructura
+export const useAddStructure = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ implementationId, file }: { implementationId: number; file: File }) =>
+      addStructure(implementationId, file),
+    onSuccess: () => {
+      // Invalida la caché de las integraciones para refrescar los datos
+      queryClient.invalidateQueries({ queryKey: ['implementations-repo'] });
+    },
+  });
+};
+
+// Hook para editar una estructura
+export const useEditStructure = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ implementationId, file }: { implementationId: number; file: File }) =>
+      editStructure(implementationId, file),
+    onSuccess: () => {
+      // Invalida la caché de las integraciones para refrescar los datos
+      queryClient.invalidateQueries({ queryKey: ['implementations-repo'] });
+    },
+  });
+};
+
+// Hook para eliminar una estructura
+export const useDeleteStructure = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (implementationId: number) => deleteStructure(implementationId),
+    onSuccess: () => {
+      // Invalida la caché de las integraciones para refrescar los datos
+      queryClient.invalidateQueries({ queryKey: ['implementations-repo'] });
+    },
+  });
+};
+
+export const useGetWebhookToken = () => {
+  return useMutation({
+      mutationFn: (webhookName: string) => getWebhookToken(webhookName),
+      onError: (error) => {
+          console.error("Error fetching webhook token:", error);
+      },
+  });
 };

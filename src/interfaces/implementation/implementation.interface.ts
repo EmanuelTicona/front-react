@@ -8,6 +8,7 @@ export interface Implementation {
     group_field: string;
     url: string;
     token: string;
+    structure_data: string;
 }
 
 export interface CreateWebhookData {
