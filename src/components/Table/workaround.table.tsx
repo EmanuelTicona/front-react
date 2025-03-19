@@ -10,7 +10,7 @@ import { InputIcon } from 'primereact/inputicon';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Button } from 'primereact/button';
-import { useWorkarounds, useWorkaroundFlows, useCreateWorkaround, useAddWorkaroundFlow } from '../../queries/useWorkaround';
+import { useWorkarounds, useWorkaroundFlows, useCreateWorkaround, useAddWorkaroundFlow, useUpdateFlowSteps } from '../../queries/useWorkaround';
 import { WorkaroundList, WorkaroundFlow } from '../../interfaces/workaround/workaround.interface';
 import '../../incidentDetails.css';
 
@@ -29,7 +29,7 @@ export default function WorkaroundTable() {
     id_orquestador: '',
     sentido: '',
     job_name: '',
-    notificacion: 'NO',
+    notificacion: '',
   });
   const [newFlow, setNewFlow] = useState<Omit<WorkaroundFlow, 'id' | 'create_time'>>({
     workaround_id: selectedWorkaround?.id || 0,
@@ -42,13 +42,13 @@ export default function WorkaroundTable() {
     auto_id: '',
   });
 
-  // Obtener los flows del workaround seleccionado
+  // flows
   const { data: workaroundFlows, isLoading: flowsLoading } = useWorkaroundFlows(selectedWorkaround?.id || 0);
 
-  // Hook para crear un nuevo workaround
+  // crear workaround
   const { mutate: createWorkaround, isLoading: isCreating } = useCreateWorkaround();
 
-  // Hook para crear un nuevo flow
+  // crear flow
   const { mutate: createFlow, isLoading: isCreatingFlow } = useAddWorkaroundFlow();
 
   const onRowClick = (event: { data: WorkaroundList }) => {
@@ -78,7 +78,7 @@ export default function WorkaroundTable() {
     if (selectedWorkaround) {
       const flowData = {
         ...newFlow,
-        workaround_id: selectedWorkaround.id, // Asegurar que el workaround_id sea el correcto
+        workaround_id: selectedWorkaround.id,
       };
       createFlow(flowData, {
         onSuccess: () => {
@@ -160,7 +160,7 @@ export default function WorkaroundTable() {
           scrollHeight="flex"
           style={{ flex: 1 }}
         >
-          {/* Columnas de la tabla de workarounds */}
+          {/* Tabla Workaround */}
           <Column field="id" header="ID" sortable filter style={{ minWidth: "10rem" }} />
           <Column field="nombre" header="Nombre" sortable filter style={{ minWidth: "12rem" }} />
           <Column field="identificador" header="Identificador" sortable filter style={{ minWidth: "12rem" }} />
@@ -173,7 +173,7 @@ export default function WorkaroundTable() {
         </DataTable>
       </div>
 
-      {/* Diálogo para crear un nuevo workaround */}
+      {/* Crear Workaround */}
       <Dialog
         visible={createDialogVisible}
         onHide={() => setCreateDialogVisible(false)}
@@ -258,76 +258,7 @@ export default function WorkaroundTable() {
         </div>
       </Dialog>
 
-      {/* Diálogo para crear un nuevo flow */}
-      <Dialog
-        visible={createFlowDialogVisible}
-        onHide={() => setCreateFlowDialogVisible(false)}
-        header="Crear Flow"
-        style={{ width: '50vw' }}
-        modal
-      >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="nro_paso">Nro. Paso</label>
-            <InputText
-              id="nro_paso"
-              value={newFlow.nro_paso}
-              onChange={(e) => setNewFlow({ ...newFlow, nro_paso: Number(e.target.value) })}
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="tipo_entidad">Tipo Entidad</label>
-            <InputText
-              id="tipo_entidad"
-              value={newFlow.tipo_entidad}
-              onChange={(e) => setNewFlow({ ...newFlow, tipo_entidad: e.target.value })}
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="entidad">Entidad</label>
-            <InputText
-              id="entidad"
-              value={newFlow.entidad}
-              onChange={(e) => setNewFlow({ ...newFlow, entidad: e.target.value })}
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="servicio">Servicio</label>
-            <InputText
-              id="servicio"
-              value={newFlow.servicio}
-              onChange={(e) => setNewFlow({ ...newFlow, servicio: e.target.value })}
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="sistema_operativo">Sistema Operativo</label>
-            <InputText
-              id="sistema_operativo"
-              value={newFlow.sistema_operativo}
-              onChange={(e) => setNewFlow({ ...newFlow, sistema_operativo: e.target.value })}
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="direccion_ip">Dirección IP</label>
-            <InputText
-              id="direccion_ip"
-              value={newFlow.direccion_ip}
-              onChange={(e) => setNewFlow({ ...newFlow, direccion_ip: e.target.value })}
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="auto_id">Auto ID</label>
-            <InputText
-              id="auto_id"
-              value={newFlow.auto_id}
-              onChange={(e) => setNewFlow({ ...newFlow, auto_id: e.target.value })}
-            />
-          </div>
-          <Button label="Crear" onClick={handleCreateFlow} />
-        </div>
-      </Dialog>
-
-      {/* Diálogo para ver detalles del workaround */}
+      {/* Detalle de Workaround */}
       <Dialog
         visible={visible}
         onHide={() => setVisible(false)}
@@ -393,26 +324,57 @@ export default function WorkaroundTable() {
                   </div>
                 ) : (
                   <>
-                    <Button
-                      label="Agregar Flow"
-                      icon="pi pi-plus"
-                      onClick={() => setCreateFlowDialogVisible(true)}
-                      className="p-button-success mb-3"
-                    />
-                    <DataTable
-                      value={workaroundFlows || []}
-                      rows={5}
-                      className="p-datatable-sm"
-                    >
-                      <Column field="id" header="ID" style={{ width: '10%' }} />
-                      <Column field="nro_paso" header="Nro. Paso" style={{ width: '10%' }} />
-                      <Column field="tipo_entidad" header="Tipo Entidad" style={{ width: '15%' }} />
-                      <Column field="entidad" header="Entidad" style={{ width: '15%' }} />
-                      <Column field="servicio" header="Servicio" style={{ width: '15%' }} />
-                      <Column field="sistema_operativo" header="Sistema Operativo" style={{ width: '15%' }} />
-                      <Column field="direccion_ip" header="Dirección IP" style={{ width: '15%' }} />
-                      <Column field="auto_id" header="Auto ID" style={{ width: '15%' }} />
+                    <DataTable value={[...workaroundFlows, { isNew: true }]} rows={5} className="p-datatable-sm">
+                      <Column field="id" header="ID" style={{ width: '10%' }} body={(rowData) => rowData.isNew ? '-' : rowData.id} />
+                      <Column field="nro_paso" header="Nro. Paso" style={{ width: '10%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Nro. Paso" value={newFlow.nro_paso || (Math.max(...workaroundFlows.map(f => f.nro_paso), 0) + 1)}
+                            onChange={(e) => setNewFlow({ ...newFlow, nro_paso: Number(e.target.value) })} />
+                        ) : rowData.nro_paso}
+                      />
+                      <Column field="tipo_entidad" header="Tipo Entidad" style={{ width: '15%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Tipo Entidad" value={newFlow.tipo_entidad}
+                            onChange={(e) => setNewFlow({ ...newFlow, tipo_entidad: e.target.value })} />
+                        ) : rowData.tipo_entidad}
+                      />
+                      <Column field="entidad" header="Entidad" style={{ width: '15%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Entidad" value={newFlow.entidad}
+                            onChange={(e) => setNewFlow({ ...newFlow, entidad: e.target.value })} />
+                        ) : rowData.entidad}
+                      />
+                      <Column field="servicio" header="Servicio" style={{ width: '15%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Servicio" value={newFlow.servicio}
+                            onChange={(e) => setNewFlow({ ...newFlow, servicio: e.target.value })} />
+                        ) : rowData.servicio}
+                      />
+                      <Column field="sistema_operativo" header="Sistema Operativo" style={{ width: '15%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Sistema Operativo" value={newFlow.sistema_operativo}
+                            onChange={(e) => setNewFlow({ ...newFlow, sistema_operativo: e.target.value })} />
+                        ) : rowData.sistema_operativo}
+                      />
+                      <Column field="direccion_ip" header="Dirección IP" style={{ width: '15%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Dirección IP" value={newFlow.direccion_ip}
+                            onChange={(e) => setNewFlow({ ...newFlow, direccion_ip: e.target.value })} />
+                        ) : rowData.direccion_ip}
+                      />
+                      <Column field="auto_id" header="Auto ID" style={{ width: '15%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <InputText placeholder="Auto ID" value={newFlow.auto_id}
+                            onChange={(e) => setNewFlow({ ...newFlow, auto_id: e.target.value })} />
+                        ) : rowData.auto_id}
+                      />
+                      <Column header="Acción" style={{ width: '10%' }}
+                        body={(rowData) => rowData.isNew ? (
+                          <Button icon="pi pi-plus" className="p-button-success" onClick={handleCreateFlow} disabled={isCreatingFlow} />
+                        ) : null}
+                      />
                     </DataTable>
+
                   </>
                 )}
               </div>

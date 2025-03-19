@@ -8,7 +8,7 @@ export const integration = async (): Promise<Integration[]> => {
 };
 
 export const integrationById = async (id: number): Promise<Integration[]> => {
-    const response = await axios.get(API_URL + 'api/data/integrations/' + id);
+    const response = await axios.get(API_URL + 'api/data/integration/' + id);
     const integration = response.data?.data ? [response.data.data] : [];
     return integration;
 };

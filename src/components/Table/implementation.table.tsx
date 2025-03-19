@@ -15,7 +15,7 @@ import {
   useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook,
   useGroupMappings, useAddGroupMapping, useDeleteGroupMapping, useAddStructure, useDeleteStructure, useEditStructure, useGetWebhookToken
 } from '../../queries/useImplementation';
-import { useCompaniesList } from '../../queries/useCompany';
+import { useCompaniesList, useCompanyById } from '../../queries/useCompany';
 import { useGroupsList } from '../../queries/useGroup';
 import { useIntegrations } from '../../queries/useIntegration';
 import '../../incidentDetails.css';
@@ -176,11 +176,11 @@ export default function ImplementationComponent() {
       },
       onError: (error) => {
         let errorMessage = 'Error al crear el webhook';
-        
+
         if (error.response && error.response.data && error.response.data.error) {
           errorMessage = error.response.data.error; // Capturar mensaje del backend
         }
-        
+
         toast.current?.show({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
       },
     });
@@ -266,6 +266,11 @@ export default function ImplementationComponent() {
       value: c.id,
     })) || [];
 
+  const integrationMap = integrations?.reduce((map, integration) => {
+    map[integration.id] = integration.name;
+    return map;
+  }, {} as Record<number, string>);
+
   const header = renderHeader();
 
   return (
@@ -294,6 +299,24 @@ export default function ImplementationComponent() {
           <Column field="status" header="Estado" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
           <Column field="group_field" header="Group Field" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
           <Column field="url" header="URL" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
+          <Column
+            field="company_id"
+            header="Empresa"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => companyMap[rowData.company_id] || "Unknown"}
+          />
+          <Column
+            field="integration_id"
+            header="Integración"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => integrationMap[rowData.integration_id] || "Unknown"}
+          />
           <Column
             body={(rowData) => (
               <Button
@@ -330,13 +353,13 @@ export default function ImplementationComponent() {
                     </div>
                     <div className="grid">
                       <div className="col-12 md:col-6">
-                          <Card className="surface-50">
-                            <h3 className="text-gray-900">Información Principal</h3>
-                            <div className="mb-2">
-                              <label className="font-bold text-gray-900">Nombre:</label>
-                              <div>{selectedImplementation.name}</div>
-                            </div>
-                            <div className="mb-2">
+                        <Card className="surface-50">
+                          <h3 className="text-gray-900">Información Principal</h3>
+                          <div className="mb-2">
+                            <label className="font-bold text-gray-900">Nombre:</label>
+                            <div>{selectedImplementation.name}</div>
+                          </div>
+                          <div className="mb-2">
                             <label className="font-bold text-gray-900">Servicio:</label>
                             <div>{selectedImplementation.service_name}</div>
                           </div>
@@ -409,7 +432,7 @@ export default function ImplementationComponent() {
             </TabPanel>
 
             {/* TAB para editar group_field */}
-            <TabPanel header="Editar Group Field" leftIcon="pi pi-pencil mr-2">
+            <TabPanel header="Editar Grupos" leftIcon="pi pi-pencil mr-2">
               <div className="p-fluid">
                 <div className="p-field">
                   <label htmlFor="groupField">Group Field</label>
@@ -421,11 +444,8 @@ export default function ImplementationComponent() {
                 </div>
                 <Button label="Guardar" onClick={handleSaveGroupField} />
               </div>
-            </TabPanel>
 
-            {/* TAB para Group Mappings */}
-            <TabPanel header="Group Mappings" leftIcon="pi pi-list mr-2">
-              <div className="p-fluid">
+              <div className="p-fluid mt-5">
                 <div className="p-field">
                   <label htmlFor="identifier">Identificador</label>
                   <InputText
