@@ -15,6 +15,11 @@ export const editImplementationGroupField = async (id: number, groupField: strin
     return response.data;
 };
 
+export const editImplementationGroupDefault = async (id: number, groupDefault: number): Promise<Implementation> => {
+    const response = await axios.put(API_URL + `api/data/implementation/${id}/assign-group`, { group_default: groupDefault });
+    return response.data;
+};
+
 export const createWebhook = async (data: CreateWebhookData): Promise<any> => {
     const response = await axios.post(API_URL + 'api/webhook/create', data);
     return response.data;

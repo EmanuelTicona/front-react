@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getImplementations, editImplementationGroupField, createWebhook, deleteWebhook, 
+import { getImplementations, editImplementationGroupField, createWebhook, deleteWebhook, editImplementationGroupDefault,
     getGroupMappings, addGroupMapping, deleteGroupMapping, addStructure, editStructure, deleteStructure, getWebhookToken  } from "../api/implementation";
 import { CreateWebhookData } from './../interfaces/implementation/implementation.interface';
 
@@ -23,6 +23,19 @@ export const useEditImplementationGroupField = () => {
             queryClient.invalidateQueries({ queryKey: ['implementations'] });
         },
     });
+};
+
+export const useEditImplementationGroupDefault = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+      mutationFn: ({ id, groupDefault }: { id: number; groupDefault: number }) =>
+          editImplementationGroupDefault(id, groupDefault),
+      onSuccess: () => {
+          // Invalida la caché de las implementaciones para refrescar los datos
+          queryClient.invalidateQueries({ queryKey: ['implementations'] });
+      },
+  });
 };
 
 export const useCreateWebhook = () => {

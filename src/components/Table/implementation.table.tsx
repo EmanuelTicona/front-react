@@ -12,7 +12,7 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Dropdown } from 'primereact/dropdown';
 import {
-  useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook,
+  useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook, useEditImplementationGroupDefault,
   useGroupMappings, useAddGroupMapping, useDeleteGroupMapping, useAddStructure, useDeleteStructure, useEditStructure, useGetWebhookToken
 } from '../../queries/useImplementation';
 import { useCompaniesList, useCompanyById } from '../../queries/useCompany';
@@ -28,6 +28,7 @@ export default function ImplementationComponent() {
   const { data: groups } = useGroupsList();
   const { data: groupMappings } = useGroupMappings();
   const editGroupFieldMutation = useEditImplementationGroupField();
+  const editGroupDefaultMutation = useEditImplementationGroupDefault();
   const createWebhookMutation = useCreateWebhook();
   const deleteWebhookMutation = useDeleteWebhook();
   const addGroupMappingMutation = useAddGroupMapping();
@@ -41,6 +42,7 @@ export default function ImplementationComponent() {
   const [visible, setVisible] = useState(false);
   const [selectedImplementation, setSelectedImplementation] = useState<typeof implementations[0] | null>(null);
   const [updatedGroupField, setUpdatedGroupField] = useState<string>('');
+  const [updatedGroupDefault, setUpdatedGroupDefault] = useState<number | null>(null);
   const [isCreateDialogVisible, setIsCreateDialogVisible] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const [isAddStructureDialogVisible, setIsAddStructureDialogVisible] = useState(false);
@@ -111,6 +113,25 @@ export default function ImplementationComponent() {
           onSuccess: () => {
             toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Campo group_field actualizado correctamente', life: 3000 });
             queryClient.invalidateQueries({ queryKey: ['implementations'] }); // Refrescar datos
+          },
+        }
+      );
+    }
+  };
+
+  const handleSaveGroupDefault = () => {
+    if (selectedImplementation && updatedGroupDefault !== null) {
+      editGroupDefaultMutation.mutate(
+        { id: selectedImplementation.id, groupDefault: updatedGroupDefault },
+        {
+          onSuccess: () => {
+            toast.current?.show({
+              severity: "success",
+              summary: "Éxito",
+              detail: "Campo group_default actualizado correctamente",
+              life: 3000,
+            });
+            queryClient.invalidateQueries({ queryKey: ["implementations"] }); // Refrescar datos
           },
         }
       );
@@ -443,6 +464,20 @@ export default function ImplementationComponent() {
                   />
                 </div>
                 <Button label="Guardar" onClick={handleSaveGroupField} />
+              </div>
+
+              <div className="p-fluid mt-5">
+                <div className="p-field">
+                  <label htmlFor="groupDefault">Group Default</label>
+                  <Dropdown
+                    id="groupDefault"
+                    value={updatedGroupDefault}
+                    options={groups?.map((group) => ({ label: group.short_name, value: group.id })) || []}
+                    onChange={(e) => setUpdatedGroupDefault(e.value)}
+                    placeholder="Selecciona un grupo por defecto"
+                  />
+                </div>
+                <Button label="Guardar" onClick={handleSaveGroupDefault} />
               </div>
 
               <div className="p-fluid mt-5">
