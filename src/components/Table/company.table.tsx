@@ -8,29 +8,33 @@ import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { TabView, TabPanel } from 'primereact/tabview';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { useCompaniesList, useAddStructure, useEditStructure, useDeleteStructure } from '../../queries/useCompany';
-import '../../incidentDetails.css';
+import { useCompaniesList, useAddCompany, useEditCompany, useDeleteCompany } from '../../queries/useCompany';
 import { useQueryClient } from '@tanstack/react-query';
 
-export default function BasicFilterDemo() {
+export default function CompanyTable() {
   const { data: companies, isLoading } = useCompaniesList();
-  const addStructureMutation = useAddStructure();
-  const editStructureMutation = useEditStructure();
-  const deleteStructureMutation = useDeleteStructure();
+  const addCompanyMutation = useAddCompany();
+  const editCompanyMutation = useEditCompany();
+  const deleteCompanyMutation = useDeleteCompany();
+  
   const queryClient = useQueryClient();
 
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
   const [visible, setVisible] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<typeof companies[0] | null>(null);
-  const [isAddStructureDialogVisible, setIsAddStructureDialogVisible] = useState(false);
-  const [isEditStructureDialogVisible, setIsEditStructureDialogVisible] = useState(false);
-  const [jsonFile, setJsonFile] = useState<File | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
+  const [isEditDialogVisible, setIsEditDialogVisible] = useState(false);
+
+  const [newCompany, setNewCompany] = useState<Omit<any, 'id'>>({ 
+    name: '', 
+    // Add other company fields here
+  });
+  const [updatedCompany, setUpdatedCompany] = useState<Partial<any>>({});
   const toast = React.useRef<Toast>(null);
 
-  const onRowClick = (event: { data: typeof companies[0] }) => {
+  const onRowClick = (event: { data: any }) => {
     setSelectedCompany(event.data);
     setVisible(true);
   };
@@ -39,6 +43,7 @@ export default function BasicFilterDemo() {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     id: { value: null, matchMode: FilterMatchMode.EQUALS },
     name: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    // Add other company fields here
   });
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,53 +57,63 @@ export default function BasicFilterDemo() {
     setGlobalFilterValue(value);
   };
 
-  const handleAddStructure = () => {
-    if (jsonFile && selectedCompany) {
-      addStructureMutation.mutate(
-        { companyId: selectedCompany.id, file: jsonFile },
+  const handleAddCompany = () => {
+    addCompanyMutation.mutate(newCompany, {
+      onSuccess: () => {
+        setIsAddDialogVisible(false);
+        setNewCompany({ name: '' }); // Reset form
+        toast.current?.show({ 
+          severity: 'success', 
+          summary: 'Éxito', 
+          detail: 'Empresa agregada correctamente', 
+          life: 3000 
+        });
+      },
+      onError: () => {
+        toast.current?.show({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Error al agregar empresa', 
+          life: 3000 
+        });
+      }
+    });
+  };
+
+  const handleEditCompany = () => {
+    if (selectedCompany) {
+        editCompanyMutation.mutate(
+        { id: selectedCompany.id, updatedCompany },
         {
           onSuccess: () => {
-            setIsAddStructureDialogVisible(false);
-            setJsonFile(null); // Reset file input
-            toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Estructura agregada correctamente', life: 3000 });
-
-            // Actualizar la caché de React Query
-            queryClient.invalidateQueries({ queryKey: ['companies-repo'] });
+            setIsEditDialogVisible(false);
+            setUpdatedCompany({}); // Reset form
+            toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Integración editada correctamente', life: 3000 });
           },
         }
       );
     }
   };
 
-  const handleEditStructure = () => {
-    if (jsonFile && selectedIntegration) {
-      editStructureMutation.mutate(
-        { integrationId: selectedIntegration.id, file: jsonFile },
-        {
-          onSuccess: () => {
-            setIsEditStructureDialogVisible(false);
-            setJsonFile(null); // Reset file input
-            toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Estructura editada correctamente', life: 3000 });
-
-            // Actualizar la caché de React Query
-            queryClient.invalidateQueries({ queryKey: ['integrations-repo'] });
-          },
-        }
-      );
-    }
-  };
-
-  const handleDeleteStructure = () => {
-    if (selectedIntegration) {
-      deleteStructureMutation.mutate(selectedIntegration.id, {
-        onSuccess: () => {
-          toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Estructura eliminada correctamente', life: 3000 });
-
-          // Actualizar la caché de React Query
-          queryClient.invalidateQueries({ queryKey: ['integrations-repo'] });
-        },
-      });
-    }
+  const handleDeleteCompany = (id: number) => {
+    deleteCompanyMutation.mutate(id, {
+      onSuccess: () => {
+        toast.current?.show({ 
+          severity: 'success', 
+          summary: 'Éxito', 
+          detail: 'Empresa eliminada correctamente', 
+          life: 3000 
+        });
+      },
+      onError: () => {
+        toast.current?.show({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Error al eliminar empresa', 
+          life: 3000 
+        });
+      }
+    });
   };
 
   const renderHeader = () => {
@@ -106,10 +121,14 @@ export default function BasicFilterDemo() {
       <div className="flex justify-content-end align-items-center">
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
-          <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Buscar..." />
+          <InputText 
+            value={globalFilterValue} 
+            onChange={onGlobalFilterChange} 
+            placeholder="Buscar empresas..." 
+          />
         </IconField>
         <Button
-          label="Agregar Integración"
+          label="Agregar Empresa"
           icon="pi pi-plus"
           className="ml-3"
           onClick={() => setIsAddDialogVisible(true)}
@@ -125,23 +144,24 @@ export default function BasicFilterDemo() {
       <Toast ref={toast} />
       <div className="card" style={{ height: "1000px", display: "flex", flexDirection: "column" }}>
         <DataTable
-          value={integrations || []}
+          value={companies || []}
           paginator
           rows={10}
           dataKey="id"
           filters={filters}
           filterDisplay="row"
           loading={isLoading}
-          globalFilterFields={["id", "name"]}
+          globalFilterFields={["id", "name"]} // Add other company fields here
           header={header}
-          emptyMessage="No integrations found."
+          emptyMessage="No se encontraron empresas."
           onRowClick={onRowClick}
           selectionMode="single"
           scrollHeight="flex"
           style={{ flex: 1 }}
         >
-          <Column field="id" header="id" sortable filter filterPlaceholder="" style={{ minWidth: "10rem" }} />
-          <Column field="name" header="implementation" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
+          <Column field="id" header="ID" sortable filter filterPlaceholder="" style={{ minWidth: "10rem" }} />
+          <Column field="name" header="Nombre" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
+          {/* Add other company columns here */}
           <Column
             body={(rowData) => (
               <div>
@@ -150,8 +170,8 @@ export default function BasicFilterDemo() {
                   className="p-button-rounded p-button-text"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedIntegration(rowData);
-                    setUpdatedIntegration({ name: rowData.name });
+                    setSelectedCompany(rowData);
+                    setUpdatedCompany({ name: rowData.name });
                     setIsEditDialogVisible(true);
                   }}
                 />
@@ -160,7 +180,7 @@ export default function BasicFilterDemo() {
                   className="p-button-rounded p-button-text p-button-danger"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteIntegration(rowData.id);
+                    handleDeleteCompany(rowData.id);
                   }}
                 />
               </div>
@@ -169,11 +189,11 @@ export default function BasicFilterDemo() {
         </DataTable>
       </div>
 
-      {/* Diálogo para agregar una integración */}
+      {/* Add Company Dialog */}
       <Dialog
         visible={isAddDialogVisible}
         onHide={() => setIsAddDialogVisible(false)}
-        header="Agregar Integración"
+        header="Agregar Empresa"
         style={{ width: '50vw' }}
         modal
       >
@@ -182,19 +202,24 @@ export default function BasicFilterDemo() {
             <label htmlFor="name">Nombre</label>
             <InputText
               id="name"
-              value={newIntegration.name}
-              onChange={(e) => setNewIntegration({ ...newIntegration, name: e.target.value })}
+              value={newCompany.name}
+              onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
             />
           </div>
-          <Button label="Guardar" onClick={handleAddIntegration} />
+          {/* Add other company fields here */}
+          <Button 
+            label="Guardar" 
+            onClick={handleAddCompany} 
+            loading={addCompanyMutation.isPending}
+          />
         </div>
       </Dialog>
 
-      {/* Diálogo para editar una integración */}
+      {/* Edit Company Dialog */}
       <Dialog
         visible={isEditDialogVisible}
         onHide={() => setIsEditDialogVisible(false)}
-        header="Editar Integración"
+        header="Editar Empresa"
         style={{ width: '50vw' }}
         modal
       >
@@ -203,121 +228,47 @@ export default function BasicFilterDemo() {
             <label htmlFor="name">Nombre</label>
             <InputText
               id="name"
-              value={updatedIntegration.name || ''}
-              onChange={(e) => setUpdatedIntegration({ ...updatedIntegration, name: e.target.value })}
+              value={updatedCompany.name || ''}
+              onChange={(e) => setUpdatedCompany({ ...updatedCompany, name: e.target.value })}
             />
           </div>
-          <Button label="Guardar" onClick={handleEditIntegration} />
+          {/* Add other company fields here */}
+          <Button 
+            label="Guardar" 
+            onClick={handleEditCompany} 
+            loading={editCompanyMutation.isPending}
+          />
         </div>
       </Dialog>
 
-      {/* Diálogo para ver detalles de la integración */}
+      {/* Company Details Dialog */}
       <Dialog
         visible={visible}
         onHide={() => setVisible(false)}
-        header="Detalles de la Integración"
+        header="Detalles de la Empresa"
         style={{ width: '60vw', height: '500px' }}
         modal
-        className="incident-dialog"
       >
-        {selectedIntegration && (
-          <TabView className="custom-tabs">
+        {selectedCompany && (
+          <TabView>
             <TabPanel header="Detalles" leftIcon="pi pi-info-circle mr-2">
               <div className="grid">
                 <div className="col-12">
-                  <div className="flex">
-                    {/* Card para el nombre */}
-                    <Card className="mb-3 mr-3" style={{ flex: 1 }}>
-                      <div className="flex align-items-center mb-3 w-full">
-                        <h2 className="text-xl m-0 mr-3 text-gray-900">Integración #{selectedIntegration.id}</h2>
-                      </div>
-                      <div className="mb-2">
-                        <label className="font-bold text-gray-900">Nombre:</label>
-                        <div>{selectedIntegration.name}</div>
-                      </div>
-                    </Card>
-
-                    {/* Card para la estructura */}
-                    <Card className="mb-3" style={{ flex: 1 }}>
-                      <h3 className="text-gray-900">Estructura</h3>
-                      {selectedIntegration.structure_data ? (
-                        <pre>{JSON.stringify(selectedIntegration.structure_data, null, 2)}</pre>
-                      ) : (
-                        <p>No hay estructura definida.</p>
-                      )}
-                    </Card>
-                  </div>
+                  <Card className="mb-3">
+                    <div className="flex align-items-center mb-3 w-full">
+                      <h2 className="text-xl m-0 mr-3 text-gray-900">Empresa #{selectedCompany.id}</h2>
+                    </div>
+                    <div className="mb-2">
+                      <label className="font-bold text-gray-900">Nombre:</label>
+                      <div>{selectedCompany.name}</div>
+                    </div>
+                    {/* Add other company details here */}
+                  </Card>
                 </div>
-              </div>
-              <div className="flex justify-content-end mt-3">
-                {selectedIntegration.structure_data ? (
-                  <>
-                    <Button
-                      label="Editar Estructura"
-                      icon="pi pi-pencil"
-                      className="p-button-warning mr-2"
-                      onClick={() => setIsEditStructureDialogVisible(true)}
-                    />
-                    <Button
-                      label="Eliminar Estructura"
-                      icon="pi pi-trash"
-                      className="p-button-danger"
-                      onClick={handleDeleteStructure}
-                    />
-                  </>
-                ) : (
-                  <Button
-                    label="Agregar Estructura"
-                    icon="pi pi-plus"
-                    onClick={() => setIsAddStructureDialogVisible(true)}
-                  />
-                )}
               </div>
             </TabPanel>
           </TabView>
         )}
-      </Dialog>
-
-      {/* Diálogo para agregar estructura */}
-      <Dialog
-        visible={isAddStructureDialogVisible}
-        onHide={() => setIsAddStructureDialogVisible(false)}
-        header="Agregar Estructura"
-        style={{ width: '50vw' }}
-        modal
-      >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="jsonFile">Subir archivo JSON</label>
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <Button label="Guardar" onClick={handleAddStructure} />
-        </div>
-      </Dialog>
-
-      {/* Diálogo para editar estructura */}
-      <Dialog
-        visible={isEditStructureDialogVisible}
-        onHide={() => setIsEditStructureDialogVisible(false)}
-        header="Editar Estructura"
-        style={{ width: '50vw' }}
-        modal
-      >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="jsonFile">Subir archivo JSON</label>
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <Button label="Guardar" onClick={handleEditStructure} />
-        </div>
       </Dialog>
     </div>
   );

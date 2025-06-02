@@ -12,27 +12,24 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Dropdown } from 'primereact/dropdown';
 import {
-  useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook, useEditImplementationGroupDefault,
-  useGroupMappings, useAddGroupMapping, useDeleteGroupMapping, useAddStructure, useDeleteStructure, useEditStructure, useGetWebhookToken
+  useImplementations, useEditImplementationGroupField, useCreateWebhook, useDeleteWebhook,
+  useAddStructure, useDeleteStructure, useEditStructure, useGetWebhookToken
 } from '../../queries/useImplementation';
-import { useCompaniesList, useCompanyById } from '../../queries/useCompany';
-import { useGroupsList } from '../../queries/useGroup';
+import { useAiopsCompaniesList } from '../../queries/useAiopsCompany';
+import { useCompaniesList } from '../../queries/useCompany';
 import { useIntegrations } from '../../queries/useIntegration';
+import { useMonitoringToolsList } from '../../queries/useMonitoringTools';
 import '../../incidentDetails.css';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function ImplementationComponent() {
   const { data: implementations, isLoading } = useImplementations();
   const { data: integrations } = useIntegrations();
+  const { data: aiops_companies } = useAiopsCompaniesList();
   const { data: companies } = useCompaniesList();
-  const { data: groups } = useGroupsList();
-  const { data: groupMappings } = useGroupMappings();
   const editGroupFieldMutation = useEditImplementationGroupField();
-  const editGroupDefaultMutation = useEditImplementationGroupDefault();
   const createWebhookMutation = useCreateWebhook();
   const deleteWebhookMutation = useDeleteWebhook();
-  const addGroupMappingMutation = useAddGroupMapping();
-  const deleteGroupMappingMutation = useDeleteGroupMapping();
   const addStructureMutation = useAddStructure();
   const editStructureMutation = useEditStructure();
   const deleteStructureMutation = useDeleteStructure();
@@ -42,7 +39,6 @@ export default function ImplementationComponent() {
   const [visible, setVisible] = useState(false);
   const [selectedImplementation, setSelectedImplementation] = useState<typeof implementations[0] | null>(null);
   const [updatedGroupField, setUpdatedGroupField] = useState<string>('');
-  const [updatedGroupDefault, setUpdatedGroupDefault] = useState<number | null>(null);
   const [isCreateDialogVisible, setIsCreateDialogVisible] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const [isAddStructureDialogVisible, setIsAddStructureDialogVisible] = useState(false);
@@ -52,22 +48,16 @@ export default function ImplementationComponent() {
   const [token, setToken] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const getWebhookToken = useGetWebhookToken();
+  const { data: monitoringTools } = useMonitoringToolsList();
   const [newWebhookData, setNewWebhookData] = useState({
     webhook_name: '',
     integration_id: null as number | null,
     name: '',
-    company_id: null as number | null,
+    aiops_company_id: null as number | null,
+    monitoring_tool_id: null as number | null
   });
-  const [newGroupMapping, setNewGroupMapping] = useState({
-    identifier: '',
-    group_id: '',
-  });
-  const toast = React.useRef<Toast>(null);
 
-  const groupMap = groups?.reduce((map, group) => {
-    map[group.id] = group.short_name;
-    return map;
-  }, {} as Record<number, string>);
+  const toast = React.useRef<Toast>(null);
 
   const onRowClick = (event: { data: typeof implementations[0] }) => {
     setSelectedImplementation(event.data);
@@ -113,25 +103,6 @@ export default function ImplementationComponent() {
           onSuccess: () => {
             toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Campo group_field actualizado correctamente', life: 3000 });
             queryClient.invalidateQueries({ queryKey: ['implementations'] }); // Refrescar datos
-          },
-        }
-      );
-    }
-  };
-
-  const handleSaveGroupDefault = () => {
-    if (selectedImplementation && updatedGroupDefault !== null) {
-      editGroupDefaultMutation.mutate(
-        { id: selectedImplementation.id, groupDefault: updatedGroupDefault },
-        {
-          onSuccess: () => {
-            toast.current?.show({
-              severity: "success",
-              summary: "Éxito",
-              detail: "Campo group_default actualizado correctamente",
-              life: 3000,
-            });
-            queryClient.invalidateQueries({ queryKey: ["implementations"] }); // Refrescar datos
           },
         }
       );
@@ -223,34 +194,6 @@ export default function ImplementationComponent() {
     }
   };
 
-  const handleAddGroupMapping = () => {
-    if (selectedImplementation) {
-      addGroupMappingMutation.mutate(
-        { implementationId: selectedImplementation.id, data: newGroupMapping },
-        {
-          onSuccess: () => {
-            setNewGroupMapping({ identifier: '', group_id: '' }); // Reset form
-            toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Group Mapping agregado correctamente', life: 3000 });
-          },
-          onError: () => {
-            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Error al agregar el Group Mapping', life: 3000 });
-          },
-        }
-      );
-    }
-  };
-
-  const handleDeleteGroupMapping = (id: number) => {
-    deleteGroupMappingMutation.mutate(id, {
-      onSuccess: () => {
-        toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Group Mapping eliminado correctamente', life: 3000 });
-      },
-      onError: () => {
-        toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Error al eliminar el Group Mapping', life: 3000 });
-      },
-    });
-  };
-
   const renderHeader = () => {
     return (
       <div className="flex justify-content-end align-items-center">
@@ -268,12 +211,6 @@ export default function ImplementationComponent() {
     );
   };
 
-  const companyMap = companies?.reduce((map, company) => {
-    map[company.id] = company.name;
-    return map;
-  }, {} as Record<number, string>);
-
-  // Opciones para el Dropdown de compañías
   const companyOptions = companies
     ?.filter(company => company.parent !== null) // Filtra solo las empresas que tienen parent
     .sort((a, b) => {
@@ -287,8 +224,26 @@ export default function ImplementationComponent() {
       value: c.id,
     })) || [];
 
-  const integrationMap = integrations?.reduce((map, integration) => {
+  const integrationMap = (integrations ?? []).reduce((map, integration) => {
     map[integration.id] = integration.name;
+    return map;
+  }, {} as Record<number, string>);
+
+  const companyMap = companies?.reduce((map, company) => {
+    map[company.id] = company.name;
+    return map;
+  }, {} as Record<number, string>);
+
+  const aiopsCompanyMap = aiops_companies?.reduce((map, aiopsCompany) => {
+    map[aiopsCompany.id] = {
+      id: aiopsCompany.id,
+      companyName: companyMap[aiopsCompany.company_id] || "Unknown",
+    };
+    return map;
+  }, {} as Record<number, { id: number; companyName: string }>);
+
+  const monitoringToolMap = (monitoringTools ?? []).reduce((map, monitoringTool) => {
+    map[monitoringTool.id] = monitoringTool.name;
     return map;
   }, {} as Record<number, string>);
 
@@ -321,22 +276,38 @@ export default function ImplementationComponent() {
           <Column field="group_field" header="Group Field" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
           <Column field="url" header="URL" sortable filter filterPlaceholder="" style={{ minWidth: "12rem" }} />
           <Column
-            field="company_id"
-            header="Empresa"
+            field="aiops_company_id"
+            header="AIOps Company"
             sortable
-            filter
-            filterPlaceholder=""
-            style={{ minWidth: "12rem" }}
-            body={(rowData) => companyMap[rowData.company_id] || "Unknown"}
+            style={{ minWidth: "16rem" }}
+            body={(rowData) => {
+              const aiopsCompany = aiopsCompanyMap[rowData.aiops_company_id];
+              return aiopsCompany
+                ? `${aiopsCompany.id} - ${aiopsCompany.companyName}`
+                : "Unknown";
+            }}
           />
           <Column
             field="integration_id"
             header="Integración"
             sortable
             filter
-            filterPlaceholder=""
             style={{ minWidth: "12rem" }}
-            body={(rowData) => integrationMap[rowData.integration_id] || "Unknown"}
+            body={(rowData) => {
+              const integrationName = rowData.integration_id ? integrationMap[rowData.integration_id] : undefined;
+              return integrationName ?? "Unknown";
+            }}
+          />
+          <Column
+            field="monitoring_tool_id"
+            header="Herramienta de Monitoreo"
+            sortable
+            filter
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => {
+              const monitoringToolName = rowData.monitoring_tool_id ? monitoringToolMap[rowData.monitoring_tool_id] : undefined;
+              return monitoringToolName ?? "Unknown";
+            }}
           />
           <Column
             body={(rowData) => (
@@ -453,7 +424,7 @@ export default function ImplementationComponent() {
             </TabPanel>
 
             {/* TAB para editar group_field */}
-            <TabPanel header="Editar Grupos" leftIcon="pi pi-pencil mr-2">
+            <TabPanel header="Editar Campo de Grupo" leftIcon="pi pi-pencil mr-2">
               <div className="p-fluid">
                 <div className="p-field">
                   <label htmlFor="groupField">Group Field</label>
@@ -465,65 +436,6 @@ export default function ImplementationComponent() {
                 </div>
                 <Button label="Guardar" onClick={handleSaveGroupField} />
               </div>
-
-              <div className="p-fluid mt-5">
-                <div className="p-field">
-                  <label htmlFor="groupDefault">Group Default</label>
-                  <Dropdown
-                    id="groupDefault"
-                    value={updatedGroupDefault}
-                    options={groups?.map((group) => ({ label: group.short_name, value: group.id })) || []}
-                    onChange={(e) => setUpdatedGroupDefault(e.value)}
-                    placeholder="Selecciona un grupo por defecto"
-                  />
-                </div>
-                <Button label="Guardar" onClick={handleSaveGroupDefault} />
-              </div>
-
-              <div className="p-fluid mt-5">
-                <div className="p-field">
-                  <label htmlFor="identifier">Identificador</label>
-                  <InputText
-                    id="identifier"
-                    value={newGroupMapping.identifier}
-                    onChange={(e) => setNewGroupMapping({ ...newGroupMapping, identifier: e.target.value })}
-                  />
-                </div>
-                <div className="p-field">
-                  <label htmlFor="group_id">Group</label>
-                  <Dropdown
-                    id="group_id"
-                    value={newGroupMapping.group_id}
-                    options={groups?.map((group) => ({ label: group.short_name, value: group.id })) || []}
-                    onChange={(e) => setNewGroupMapping({ ...newGroupMapping, group_id: e.value })}
-                    placeholder="Selecciona un grupo"
-                  />
-                </div>
-                <Button label="Agregar Group Mapping" onClick={handleAddGroupMapping} />
-              </div>
-              <DataTable
-                value={groupMappings?.filter((gm) => gm.implementation_id === selectedImplementation.id) || []}
-                emptyMessage="No hay group mappings para esta implementación."
-              >
-                <Column field="identifier" header="Identificador" />
-                <Column
-                  field="group_id"
-                  header="Group"
-                  body={(rowData) => groupMap[rowData.group_id] || rowData.group_id}
-                />
-                <Column
-                  body={(rowData) => (
-                    <Button
-                      icon="pi pi-trash"
-                      className="p-button-rounded p-button-text p-button-danger"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteGroupMapping(rowData.id);
-                      }}
-                    />
-                  )}
-                />
-              </DataTable>
             </TabPanel>
           </TabView>
         )}
@@ -599,13 +511,26 @@ export default function ImplementationComponent() {
             />
           </div>
           <div className="p-field">
-            <label htmlFor="company_id">Compañía</label>
+            <label htmlFor="aiops_company_id">Empresa Aiops</label>
             <Dropdown
-              id="company_id"
-              value={newWebhookData.company_id}
-              options={companyOptions} // Usa las opciones filtradas
-              onChange={(e) => setNewWebhookData({ ...newWebhookData, company_id: e.value })}
+              id="aiops_company_id"
+              value={newWebhookData.aiops_company_id}
+              options={aiops_companies?.filter(company => company.status === "active").map((company) => ({
+                label: `${company.id} - ${companyMap[company.company_id] || "Unknown"}`,
+                value: company.id
+              }))}
+              onChange={(e) => setNewWebhookData({ ...newWebhookData, aiops_company_id: e.value })}
               placeholder="Selecciona una compañía"
+            />
+          </div>
+          <div className="p-field">
+            <label htmlFor="integration_id">Herramienta de Monitoreo</label>
+            <Dropdown
+              id="monitoring_tool_id"
+              value={newWebhookData.monitoring_tool_id}
+              options={monitoringTools?.map((i) => ({ label: i.name, value: i.id })) || []}
+              onChange={(e) => setNewWebhookData({ ...newWebhookData, monitoring_tool_id: e.value })}
+              placeholder="Selecciona una herramienta de monitoreo"
             />
           </div>
           <div className="p-field">

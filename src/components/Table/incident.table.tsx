@@ -8,6 +8,8 @@ import { Timeline } from 'primereact/timeline';
 import { Card } from 'primereact/card';
 import { useIncidents } from '../../queries/useIncident';
 import { useAlertByIncidentId } from '../../queries/useAlert';
+import { useCorrelationKeysList } from '../../queries/useCorrelationKey';
+import { useWorkNotesList } from '../../queries/useWorkNote';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
@@ -29,6 +31,8 @@ import '../../incidentDetails.css';
 
 export default function BasicFilterDemo() {
   const { data: incidents, isLoading } = useIncidents();
+  const { data: correlationKeys } = useCorrelationKeysList();
+  const { data: workNotes } = useWorkNotesList();
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
   const [visible, setVisible] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<typeof incidents[0] | null>(null);
@@ -45,23 +49,22 @@ export default function BasicFilterDemo() {
   const [filters, setFilters] = useState<DataTableFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     id: { value: null, matchMode: FilterMatchMode.EQUALS },
-    implementation: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-    created_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    assigned_group: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    host: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    sys_class_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    num_alerts: { value: null, matchMode: FilterMatchMode.EQUALS },
+    start_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    ci: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    class: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    alert_count: { value: null, matchMode: FilterMatchMode.EQUALS },
     state: { value: null, matchMode: FilterMatchMode.EQUALS },
     external_id: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    updated_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    reopened_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    resolved_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    update_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    reopened_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    end_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
 
   const getStateTag = (state: string) => {
     const stateColors: Record<string, string> = {
       'OPEN': 'warning',
-      'RESOLVED': 'success'
+      'RESOLVED': 'success',
+      'OK': 'success'
     };
     return <Tag value={state} severity={stateColors[state.toLowerCase()] || 'info'} />;
   };
@@ -129,123 +132,107 @@ export default function BasicFilterDemo() {
   return (
     <div className="card">
       <div className="card" style={{ height: "1000px", display: "flex", flexDirection: "column" }}>
-      <DataTable
-        value={incidents || []}
-        paginator
-        rows={10}
-        dataKey="id"
-        filters={filters}
-        filterDisplay="row"
-        loading={isLoading}
-        globalFilterFields={["id", "host"]}
-        header={header}
-        emptyMessage="No incidents found."
-        onRowClick={onRowClick}
-        selectionMode="single"
-        scrollHeight="flex" // Esto permite que la tabla ocupe el espacio restante
-        style={{ flex: 1 }} // Hace que la tabla ocupe el espacio disponible
-      >
-        <Column
-          field="id"
-          header="id"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "10rem" }}
-        />
-        <Column
-          field="implementation"
-          header="implementation"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-        />
-        <Column
-          field="created_at"
-          header="created_at"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
-        />
-        <Column
-          field="external_id"
-          header="external_id"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-        />
-        <Column
-          field="assigned_group"
-          header="assigned_group"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-        />
-        <Column
-          field="host"
-          header="host"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-        />
-        <Column
-          field="sys_class_name"
-          header="sys_class_name"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-        />
-        <Column
-          field="num_alerts"
-          header="num_alerts"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "10rem" }}
-        />
-        <Column
-          field="state"
-          header="state"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-        />
-        <Column
-          field="updated_at"
-          header="updated_at"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.updated_at).toLocaleString()}
-        />
-        <Column
-          field="reopened_at"
-          header="reopened_at"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.reopened_at).toLocaleString()}
-        />
-        <Column
-          field="resolved_at"
-          header="resolved_at"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.resolved_at).toLocaleString()}
-        />
-      </DataTable>
+        <DataTable
+          value={incidents || []}
+          paginator
+          rows={10}
+          dataKey="id"
+          filters={filters}
+          filterDisplay="row"
+          loading={isLoading}
+          globalFilterFields={["id", "host"]}
+          header={header}
+          emptyMessage="No incidents found."
+          onRowClick={onRowClick}
+          selectionMode="single"
+          scrollHeight="flex" // Esto permite que la tabla ocupe el espacio restante
+          style={{ flex: 1 }} // Hace que la tabla ocupe el espacio disponible
+        >
+          <Column
+            field="id"
+            header="id"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "10rem" }}
+          />
+          <Column
+            field="external_id"
+            header="external_id"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+          />
+          <Column
+            field="ci"
+            header="ci"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+          />
+          <Column
+            field="class"
+            header="class"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+          />
+          <Column
+            field="alert_count"
+            header="alert_count"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "10rem" }}
+          />
+          <Column
+            field="state"
+            header="state"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+          />
+          <Column
+            field="start_time"
+            header="start_time"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => new Date(rowData.start_time).toLocaleString()}
+          />
+          <Column
+            field="end_time"
+            header="end_time"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => new Date(rowData.end_time).toLocaleString()}
+          />
+          <Column
+            field="update_time"
+            header="update_time"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => new Date(rowData.update_time).toLocaleString()}
+          />
+          <Column
+            field="reopened_time"
+            header="reopened_time"
+            sortable
+            filter
+            filterPlaceholder=""
+            style={{ minWidth: "12rem" }}
+            body={(rowData) => new Date(rowData.reopened_time).toLocaleString()}
+          />
+        </DataTable>
       </div>
       <Dialog
         visible={visible}
@@ -271,16 +258,12 @@ export default function BasicFilterDemo() {
                         <Card className="surface-50">
                           <h3 className="text-gray-900">Información Principal</h3>
                           <div className="mb-2">
-                            <label className="font-bold text-gray-900">Host:</label>
-                            <div>{selectedIncident.host}</div>
+                            <label className="font-bold text-gray-900">CI:</label>
+                            <div>{selectedIncident.ci}</div>
                           </div>
                           <div className="mb-2">
-                            <label className="font-bold text-gray-900">Grupo Asignado:</label>
-                            <div>{selectedIncident.assigned_group}</div>
-                          </div>
-                          <div className="mb-2">
-                            <label className="font-bold text-gray-900">Grupos de Host:</label>
-                            <div>{selectedIncident.hostgroups}</div>
+                            <label className="font-bold text-gray-900">Clase:</label>
+                            <div>{selectedIncident.clase}</div>
                           </div>
                         </Card>
                       </div>
@@ -288,37 +271,63 @@ export default function BasicFilterDemo() {
                         <Card className="surface-50">
                           <h3 className='text-gray-900'>Detalles Técnicos</h3>
                           <div className="mb-2">
-                            <label className="font-bold text-gray-900">Clase:</label>
-                            <div>{selectedIncident.sys_class_name}</div>
-                          </div>
-                          <div className="mb-2">
                             <label className="font-bold text-gray-900">ID Externo:</label>
                             <div>{selectedIncident.external_id}</div>
                           </div>
                           <div className="mb-2">
                             <label className="font-bold text-gray-900">Número de Alertas:</label>
-                            <Tag value={selectedIncident.num_alerts.toString()} severity="info" />
+                            <Tag value={selectedIncident.alert_count.toString()} severity="info" />
+                          </div>
+                          <div className="mb-2">
+                            <label className="font-bold text-gray-900">Claves de Correlación:</label>
+                            <div>
+                              {correlationKeys?.filter(key => key.incident_id === selectedIncident.id).length > 0 ? (
+                                correlationKeys
+                                  .filter(key => key.incident_id === selectedIncident.id)
+                                  .map(key => (
+                                    <Tag
+                                      key={key.id}
+                                      value={key.correlation_key}
+                                      className="mr-2 mb-2"
+                                      severity="success"
+                                    />
+                                  ))
+                              ) : (
+                                <span className="text-gray-500">No hay claves de correlación para este incidente</span>
+                              )}
+                            </div>
                           </div>
                         </Card>
                       </div>
                       {/* Notas de Trabajo */}
-
-                      {/* {selectedIncident.work_notes && ( */}
                       <div className="col-12 md:col-6">
                         <Card className="mb-3">
                           <h3 className='text-gray-900'>Notas de Trabajo</h3>
                           <div className="surface-50 p-3 border-round">
-                            {selectedIncident.work_notes &&
-                              selectedIncident.work_notes
-                                .split('\n') // Divide el texto en líneas
-                                .filter((note) => note.trim() !== '') // Filtra las cadenas vacías
-                                .map((note, index) => (
-                                  <p key={index}>- {note}</p> // Agrega un guion a cada línea
-                                ))}
+                            {workNotes
+                              ?.filter(note => note.incident_id === selectedIncident.id)
+                              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                              .map(note => (
+                                <div key={note.id} className="mb-3 p-3 border-round bg-white">
+                                  <div className="text-sm text-gray-500 mb-1">
+                                    {new Date(note.created_at).toLocaleString()}
+                                  </div>
+                                  <div className="text-gray-900">
+                                    {note.work_note}
+                                  </div>
+                                </div>
+                              ))
+                            }
+
+                            {/* Alternativa mostrando mensaje si no hay notas */}
+                            {workNotes?.filter(note => note.incident_id === selectedIncident.id).length === 0 && (
+                              <div className="text-center text-gray-500 p-4">
+                                No hay notas de trabajo para este incidente
+                              </div>
+                            )}
                           </div>
                         </Card>
                       </div>
-                      {/* )} */}
                     </div>
                   </Card>
                 </div>
@@ -344,30 +353,30 @@ export default function BasicFilterDemo() {
                           style={{ width: '10%' }}
                         />
                         <Column
-                          field="created_at"
+                          field="start_time"
                           header="Fecha Creación"
                           style={{ width: '10%' }}
-                          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                          body={(rowData) => new Date(rowData.start_time).toLocaleString()}
                         />
                         <Column
-                          field="last_event_date"
-                          header="Último Evento"
+                          field="end_time"
+                          header="Fecha Finalización"
                           style={{ width: '10%' }}
-                          body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
+                          body={(rowData) => new Date(rowData.end_time).toLocaleString()}
                         />
                         <Column
-                          field="host"
+                          field="ci"
                           header="CI"
                           style={{ width: '10%' }}
                         />
                         <Column
-                          field="summary"
-                          header="Descripción"
+                          field="error"
+                          header="Descripción de error"
                           style={{ width: '30%' }}
                         />
                         <Column
                           field="category_error"
-                          header="Error"
+                          header="Categoría de Error"
                           style={{ width: '10%' }}
                         />
                       </DataTable>

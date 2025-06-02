@@ -1,4 +1,4 @@
-export interface Company {
+export interface Tool {
     id: number;
     name: string;
 }

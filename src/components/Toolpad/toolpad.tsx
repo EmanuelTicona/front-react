@@ -9,9 +9,11 @@ import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import IncidentTable from '../Table/incident.table';
 import AlertTable from '../Table/alert.table';
-import EventTable from '../Table/event.table';
+import EventAiopsTable from '../Table/event_aiops.table';
 import IntegrationTable from '../Table/integration.table';
 import ImplementationTable from '../Table/implementation.table';
+import CompanyTable from '../Table/company.table';
+import AiopsCompanyTable from '../Table/aiops_company.table';
 import WorkaroundTable from '../Table/workaround.table';
 import PipelineTable from '../Table/pipeline.table';
 import TivitRedLogo from '../../assets/tivit-red-logo-2.png';
@@ -44,8 +46,8 @@ const NAVIGATION: Navigation = [
     icon: <NotificationsIcon sx={{ color: 'white !important' }}/>,
   },
   {
-    segment: 'events',
-    title: 'Eventos',
+    segment: 'event_aiops',
+    title: 'Eventos AIOPS',
     icon: <NetworkPingIcon sx={{ color: 'white !important' }}/>,
   },
   {
@@ -60,6 +62,16 @@ const NAVIGATION: Navigation = [
   {
     segment: 'implementations',
     title: 'Implementaciones',
+    icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
+  },
+  {
+    segment: 'companies',
+    title: 'Empresas',
+    icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
+  },
+  {
+    segment: 'aiops_companies',
+    title: 'Empresas AIOPS',
     icon: <ReportProblemIcon sx={{ color: 'white !important' }} />
   },
   {
@@ -201,11 +213,14 @@ const CONTENT_MAP: Record<string, JSX.Element> = {
   '/dashboard': <OrdersContent/>,
   '/incidents': <IncidentTable />,
   '/alerts': <AlertTable />,
-  '/events': <EventTable />,
+  '/event_aiops': <EventAiopsTable />,
   '/integrations': <IntegrationTable />,
   '/implementations': <ImplementationTable />,
+  '/companies': <CompanyTable />,
+  '/aiops_companies': <AiopsCompanyTable />,
   '/workarounds': <WorkaroundTable />,
   '/pipelines': <PipelineTable />,
+  
 };
 /* Pantallas */
 

@@ -5,7 +5,7 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Card } from 'primereact/card';
-import { useEvents } from '../../queries/useEvent';
+import { useEventAiops } from '../../queries/useEventAiops';
 import { useAlertById } from '../../queries/useAlert';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
@@ -14,7 +14,7 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import { ProgressSpinner } from 'primereact/progressspinner';
 
 export default function BasicFilterDemo() {
-    const { data: events, isLoading } = useEvents();
+    const { data: events, isLoading } = useEventAiops();
     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
     const [visible, setVisible] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<typeof events[0] | null>(null);
@@ -29,29 +29,25 @@ export default function BasicFilterDemo() {
     const [filters, setFilters] = useState<DataTableFilterMeta>({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         id: { value: null, matchMode: FilterMatchMode.EQUALS },
-        implementation: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-        created_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        start_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
         category_error: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        host: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        sys_class_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        num_events: { value: null, matchMode: FilterMatchMode.EQUALS },
+        ci: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        class: { value: null, matchMode: FilterMatchMode.CONTAINS },
         state: { value: null, matchMode: FilterMatchMode.EQUALS },
         alert_id: { value: null, matchMode: FilterMatchMode.EQUALS },
-        service_desc: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        ip_monitoring: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        error: { value: null, matchMode: FilterMatchMode.CONTAINS },
         status: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        summary: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        alertgroup: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        check: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        hostgroups: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        type: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        deduplication_key: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        problem_id: { value: null, matchMode: FilterMatchMode.CONTAINS }
     });
 
     const getStateTag = (state: string) => {
         const stateColors: Record<string, string> = {
             'critical': 'danger',
             'warning': 'warning',
-            'ok': 'success'
+            'open': 'warning',
+            'ok': 'success',
+            'resolved': 'success'
         };
         return <Tag value={state} severity={stateColors[state.toLowerCase()] || 'info'} />;
     };
@@ -92,7 +88,7 @@ export default function BasicFilterDemo() {
                     filters={filters}
                     filterDisplay="row"
                     loading={isLoading}
-                    globalFilterFields={["id", "host"]}
+                    globalFilterFields={["id", "ci"]}
                     header={header}
                     emptyMessage="No events found."
                     onRowClick={onRowClick}
@@ -110,21 +106,30 @@ export default function BasicFilterDemo() {
                         style={{ minWidth: "10rem" }}
                     />
                     <Column
-                        field="implementation"
-                        header="implementation"
+                        field="problem_id"
+                        header="problem_id"
                         sortable
                         filter
                         filterPlaceholder=""
                         style={{ minWidth: "12rem" }}
                     />
                     <Column
-                        field="created_at"
-                        header="created_at"
+                        field="start_time"
+                        header="start_time"
                         sortable
                         filter
                         filterPlaceholder=""
                         style={{ minWidth: "12rem" }}
-                        body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                        body={(rowData) => new Date(rowData.start_time).toLocaleString()}
+                    />
+                    <Column
+                        field="end_time"
+                        header="end_time"
+                        sortable
+                        filter
+                        filterPlaceholder=""
+                        style={{ minWidth: "12rem" }}
+                        body={(rowData) => new Date(rowData.end_time).toLocaleString()}
                     />
                     <Column
                         field="alert_id"
@@ -135,24 +140,16 @@ export default function BasicFilterDemo() {
                         style={{ minWidth: "12rem" }}
                     />
                     <Column
-                        field="alertgroup"
-                        header="alertgroup"
+                        field="ci"
+                        header="ci"
                         sortable
                         filter
                         filterPlaceholder=""
                         style={{ minWidth: "12rem" }}
                     />
                     <Column
-                        field="host"
-                        header="host"
-                        sortable
-                        filter
-                        filterPlaceholder=""
-                        style={{ minWidth: "12rem" }}
-                    />
-                    <Column
-                        field="sys_class_name"
-                        header="sys_class_name"
+                        field="class"
+                        header="class"
                         sortable
                         filter
                         filterPlaceholder=""
@@ -167,32 +164,16 @@ export default function BasicFilterDemo() {
                         style={{ minWidth: "12rem" }}
                     />
                     <Column
-                        field="check"
-                        header="check"
+                        field="error"
+                        header="error"
                         sortable
                         filter
                         filterPlaceholder=""
                         style={{ minWidth: "12rem" }}
                     />
                     <Column
-                        field="hostgroups"
-                        header="hostgroups"
-                        sortable
-                        filter
-                        filterPlaceholder=""
-                        style={{ minWidth: "12rem" }}
-                    />
-                    <Column
-                        field="ip_monitoring"
-                        header="ip_monitoring"
-                        sortable
-                        filter
-                        filterPlaceholder=""
-                        style={{ minWidth: "12rem" }}
-                    />
-                    <Column
-                        field="service_desc"
-                        header="service_desc"
+                        field="state"
+                        header="state"
                         sortable
                         filter
                         filterPlaceholder=""
@@ -207,15 +188,8 @@ export default function BasicFilterDemo() {
                         style={{ minWidth: "12rem" }}
                     />
                     <Column
-                        field="summary"
-                        header="summary"
-                        filter
-                        filterPlaceholder=""
-                        style={{ minWidth: "12rem" }}
-                    />
-                    <Column
-                        field="type"
-                        header="type"
+                        field="deduplication_key"
+                        header="deduplication_key"
                         sortable
                         filter
                         filterPlaceholder=""
@@ -240,7 +214,7 @@ export default function BasicFilterDemo() {
                                     <Card className="mb-3">
                                         <div className="flex align-items-center mb-3 w-full">
                                             <h2 className="text-xl m-0 mr-3 text-gray-900">Evento #{selectedEvent.id}</h2>
-                                            {getStateTag(selectedEvent.status)}
+                                            {getStateTag(selectedEvent.state)}
                                         </div>
                                         <div className="grid">
                                             <div className="col-12 md:col-6">
@@ -252,19 +226,11 @@ export default function BasicFilterDemo() {
                                                     </div>
                                                     <div className="mb-2">
                                                         <label className="font-bold text-gray-900">CI:</label>
-                                                        <div>{selectedEvent.host}</div>
+                                                        <div>{selectedEvent.ci}</div>
                                                     </div>
                                                     <div className="mb-2">
                                                         <label className="font-bold text-gray-900">Clase:</label>
-                                                        <div>{selectedEvent.sys_class_name}</div>
-                                                    </div>
-                                                    <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Implementación:</label>
-                                                        <div>{selectedEvent.implementation}</div>
-                                                    </div>
-                                                    <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Dirección IP:</label>
-                                                        <div>{selectedEvent.ip_monitoring}</div>
+                                                        <div>{selectedEvent.class}</div>
                                                     </div>
                                                 </Card>
                                             </div>
@@ -272,32 +238,12 @@ export default function BasicFilterDemo() {
                                                 <Card className="surface-50">
                                                     <h3 className='text-gray-900'>Detalles Técnicos</h3>
                                                     <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Descripción:</label>
-                                                        <div>{selectedEvent.summary}</div>
-                                                    </div>
-                                                    <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Error:</label>
+                                                        <label className="font-bold text-gray-900">Categoría de Error:</label>
                                                         <div>{selectedEvent.category_error}</div>
                                                     </div>
                                                     <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Tipo:</label>
-                                                        <div>{selectedEvent.type}</div>
-                                                    </div>
-                                                    <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Hostgroups:</label>
-                                                        <div>{selectedEvent.hostgroups}</div>
-                                                    </div>
-                                                    <div className="mb-2">
-                                                        <label className="font-bold text-gray-900">Alertgroup:</label>
-                                                        <div>{selectedEvent.alertgroup}</div>
-                                                    </div>
-                                                </Card>
-                                            </div>
-                                            <div className="col-12 md:col-6">
-                                                <Card className="surface-50">
-                                                    <h3 className='text-gray-900'>Payload Inicial</h3>
-                                                    <div className="mb-2">
-                                                        <div>{selectedEvent.payload}</div>
+                                                        <label className="font-bold text-gray-900">Error:</label>
+                                                        <div>{selectedEvent.error}</div>
                                                     </div>
                                                 </Card>
                                             </div>
@@ -326,16 +272,16 @@ export default function BasicFilterDemo() {
                                                     style={{ width: '20%' }}
                                                 />
                                                 <Column
-                                                    field="created_at"
+                                                    field="start_time"
                                                     header="Fecha Creación"
                                                     style={{ width: '40%' }}
-                                                    body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                                                    body={(rowData) => new Date(rowData.start_time).toLocaleString()}
                                                 />
                                                 <Column
-                                                    field="last_event_date"
-                                                    header="Fecha de Último Evento"
+                                                    field="end_time"
+                                                    header="Fecha de Finalización"
                                                     style={{ width: '40%' }}
-                                                    body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
+                                                    body={(rowData) => new Date(rowData.end_time).toLocaleString()}
                                                 />
                                             </DataTable>
                                         )}

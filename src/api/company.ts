@@ -13,31 +13,16 @@ export const companyById = async (id: number): Promise<Company[]> => {
     return company;
 };
 
-// Función para agregar estructura
-export const addStructure = async (companyId: number, file: File): Promise<void> => {
-    const formData = new FormData();
-    formData.append("file", file); // Asegúrate de que el backend espere un campo llamado "file"
-
-    await axios.post(API_URL + `api/data/add_standard_structure/${companyId}`, formData, {
-        headers: {
-            "Content-Type": "multipart/form-data", // Importante para enviar archivos
-        },
-    });
+export const createCompany = async (company: Partial<Company>): Promise<Company> => {
+    const response = await axios.post(API_URL + 'api/data/companies', company);
+    return response.data;
 };
 
-// Función para eliminar estructura
-export const deleteStructure = async (companyId: number): Promise<void> => {
-    await axios.delete(API_URL + `api/data/delete_standard_structure/${companyId}`);
+export const updateCompany = async (id: number, updatedCompany: Partial<Company>): Promise<Company> => {
+    const response = await axios.put(API_URL + 'api/data/company/' + id, updatedCompany);
+    return response.data;
 };
 
-// Función para editar estructura
-export const editStructure = async (companyId: number, file: File): Promise<void> => {
-    const formData = new FormData();
-    formData.append("file", file); // Asegúrate de que el backend espere un campo llamado "file"
-
-    await axios.put(API_URL + `api/data/edit_standard_structure/${companyId}`, formData, {
-        headers: {
-            "Content-Type": "multipart/form-data", // Importante para enviar archivos
-        },
-    });
+export const deleteCompany = async (id: number): Promise<void> => {
+    await axios.delete(API_URL + `api/data/company/${id}`);
 };

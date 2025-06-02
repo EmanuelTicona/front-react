@@ -1,7 +1,7 @@
 export interface GroupMapping {
     id: number;
     group_id: string;
-    implementation_id: number;
+    aiops_company_id: number;
     identifier: string;
 }
 
@@ -10,7 +10,7 @@ export interface Group {
     sys_id: string;
     long_name: string;
     short_name: string;
-    company: number;
+    company_id: number;
     u_servicio: string;
     u_categoria: string;
     u_subcategoria_1: string;

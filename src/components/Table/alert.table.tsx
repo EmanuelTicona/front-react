@@ -8,7 +8,8 @@ import { Timeline } from 'primereact/timeline';
 import { Card } from 'primereact/card';
 import { useAlerts } from '../../queries/useAlert';
 import { useIncidentById } from '../../queries/useIncident';
-import { useEventByAlertId } from '../../queries/useEvent';
+import { useEventAiopsByAlertId } from '../../queries/useEventAiops';
+import { useEventDetailByAlertId } from '../../queries/useEventDetail';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
@@ -21,15 +22,27 @@ export default function BasicFilterDemo() {
   const [visible, setVisible] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<typeof alerts[0] | null>(null);
 
-  const { data: relatedEvents, isLoading: eventsLoading } = useEventByAlertId(
+  const { data: relatedEvents, isLoading: eventsLoading } = useEventAiopsByAlertId(
     selectedAlert?.id ?? 0
   );
 
+  const { data: relatedEventDetails, isLoading: eventDetailsLoading } = useEventDetailByAlertId(
+    selectedAlert?.id ?? 0
+  );
+  console.log("Datos de event details:", relatedEventDetails);
+
   type EventType = {
     id: number;
-    created_at: string;
-    status?: string;
-    host?: string;
+    start_time: string;
+    state?: string;
+    ci?: string;
+  };
+
+  type EventDetailType = {
+    id: number;
+    event_time: string;
+    state?: string;
+    ci?: string;
   };
 
   const { data: relatedIncident, isLoading: incidentLoading } = useIncidentById(
@@ -43,33 +56,44 @@ export default function BasicFilterDemo() {
   const [filters, setFilters] = useState<DataTableFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     id: { value: null, matchMode: FilterMatchMode.EQUALS },
-    implementation: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
     created_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    dedupe_key: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    host: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    sys_class_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    num_events: { value: null, matchMode: FilterMatchMode.EQUALS },
+    deduplication_key: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    problem_id: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    ci: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    class: { value: null, matchMode: FilterMatchMode.CONTAINS },
     state: { value: null, matchMode: FilterMatchMode.EQUALS },
-    incident_id: { value: null, matchMode: FilterMatchMode.EQUALS },
-    last_event_date: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    resolved_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
     status: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    summary: { value: null, matchMode: FilterMatchMode.CONTAINS }
+    incident_id: { value: null, matchMode: FilterMatchMode.EQUALS },
+    start_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    end_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    update_time: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    error: { value: null, matchMode: FilterMatchMode.CONTAINS }
   });
 
   const getStateTag = (state: string) => {
     const stateColors: Record<string, string> = {
       'OPEN': 'warning',
-      'RESOLVED': 'success'
+      'RESOLVED': 'success',
+      'OK': 'success'
     };
     return <Tag value={state} severity={stateColors[state.toLowerCase()] || 'info'} />;
   };
 
   const getTimelineEvents = (events: EventType[] = []) => {
     return events.map(event => ({
-      status: event.status || `Evento ${event.id}`,
-      host: event.host || `Evento ${event.id}`,
-      date: new Date(event.created_at).toLocaleString(),
+      state: event.state || `Evento ${event.id}`,
+      ci: event.ci || `Evento ${event.id}`,
+      date: new Date(event.start_time).toLocaleString(),
+      icon: 'pi pi-calendar',
+      color: '#03A9F4'
+    }));
+  };
+
+  const getTimelineEventDetails = (eventDetails: EventDetailType[] = []) => {
+    return eventDetails.map(eventDetail => ({
+      state: eventDetail.state || `Estado no disponible`,
+      ci: eventDetail.ci || `CI no definido`,
+      date: new Date(eventDetail.event_time).toLocaleString(),
       icon: 'pi pi-calendar',
       color: '#03A9F4'
     }));
@@ -110,7 +134,7 @@ export default function BasicFilterDemo() {
         filters={filters}
         filterDisplay="row"
         loading={isLoading}
-        globalFilterFields={["id", "host"]}
+        globalFilterFields={["id", "ci"]}
         header={header}
         emptyMessage="No alerts found."
         onRowClick={onRowClick}
@@ -128,29 +152,46 @@ export default function BasicFilterDemo() {
           style={{ minWidth: "10rem" }}
         />
         <Column
-          field="host"
-          header="host"
+          field="ci"
+          header="ci"
           sortable
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
         />
         <Column
-          field="sys_class_name"
-          header="sys_class_name"
+          field="class"
+          header="class"
           sortable
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
         />
         <Column
-          field="created_at"
-          header="created_at"
+          field="problem_id"
+          header="problem_id"
           sortable
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+        />
+        <Column
+          field="start_time"
+          header="start_time"
+          sortable
+          filter
+          filterPlaceholder=""
+          style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.start_time).toLocaleString()}
+        />
+        <Column
+          field="end_time"
+          header="end_time"
+          sortable
+          filter
+          filterPlaceholder=""
+          style={{ minWidth: "12rem" }}
+          body={(rowData) => new Date(rowData.end_time).toLocaleString()}
         />
         <Column
           field="incident_id"
@@ -161,25 +202,8 @@ export default function BasicFilterDemo() {
           style={{ minWidth: "10rem" }}
         />
         <Column
-          field="last_event_date"
-          header="last_event_date"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.last_event_date).toLocaleString()}
-        />
-        <Column
-          field="num_events"
-          header="num_events"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "10rem" }}
-        />
-        <Column
-          field="dedupe_key"
-          header="dedupe_key"
+          field="deduplication_key"
+          header="deduplication_key"
           sortable
           filter
           filterPlaceholder=""
@@ -194,15 +218,6 @@ export default function BasicFilterDemo() {
           style={{ minWidth: "12rem" }}
         />
         <Column
-          field="resolved_at"
-          header="resolved_at"
-          sortable
-          filter
-          filterPlaceholder=""
-          style={{ minWidth: "12rem" }}
-          body={(rowData) => rowData.resolved_at ? new Date(rowData.resolved_at).toLocaleString() : ''}
-        />
-        <Column
           field="status"
           header="status"
           sortable
@@ -211,8 +226,17 @@ export default function BasicFilterDemo() {
           style={{ minWidth: "12rem" }}
         />
         <Column
-          field="summary"
-          header="summary"
+          field="update_time"
+          header="update_time"
+          sortable
+          filter
+          filterPlaceholder=""
+          style={{ minWidth: "12rem" }}
+          body={(rowData) => rowData.update_time ? new Date(rowData.update_time).toLocaleString() : ''}
+        />
+        <Column
+          field="error"
+          header="error"
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
@@ -248,31 +272,31 @@ export default function BasicFilterDemo() {
                           </div>
                           <div className="mb-2">
                             <label className="font-bold text-gray-900">CI:</label>
-                            <div>{selectedAlert.host}</div>
+                            <div>{selectedAlert.ci}</div>
                           </div>
                           <div className="mb-2">
                             <label className="font-bold text-gray-900">Clase:</label>
-                            <div>{selectedAlert.sys_class_name}</div>
+                            <div>{selectedAlert.class}</div>
                           </div>
                           <div className="mb-2">
                             <label className="font-bold text-gray-900">Clave de deduplicación:</label>
-                            <div>{selectedAlert.dedupe_key}</div>
+                            <div>{selectedAlert.deduplication_key}</div>
                           </div>
                         </Card>
                       </div>
                       {/* Timeline lateral */}
                       <div className="col-12 md:col-6">
-                        {relatedEvents && relatedEvents.length > 0 && (
+                        {relatedEventDetails && relatedEventDetails.length > 0 && (
                           <Card className="w-full">
                             <h3 className='text-gray-900'>Línea de Tiempo de Eventos</h3>
                             <Timeline
                               className="flex justify-content-start align-content-start"
-                              value={getTimelineEvents(relatedEvents)}
+                              value={getTimelineEventDetails(relatedEventDetails)}
                               content={(item) => (
                                 <div>
                                   <small className="text-color-secondary">{item.date}</small>
-                                  <div className="font-bold">{item.status}</div>
-                                  <div className="font-bold">{item.host}</div>
+                                  <div className="font-bold">{item.state}</div>
+                                  <div className="font-bold">{item.ci}</div>
                                 </div>
                               )}
                             />
@@ -283,21 +307,11 @@ export default function BasicFilterDemo() {
                         <Card className="surface-50">
                           <h3 className='text-gray-900'>Detalles Técnicos</h3>
                           <div className="mb-2">
-                            <label className="font-bold text-gray-900">Descripción:</label>
-                            <div>{selectedAlert.summary}</div>
-                          </div>
-                          <div className="mb-2">
                             <label className="font-bold text-gray-900">Error:</label>
-                            <div>{selectedAlert.category_error}</div>
-                          </div>
-                          <div className="mb-2">
-                            <label className="font-bold text-gray-900">Número de Eventos:</label>
-                            <Tag value={selectedAlert.num_events.toString()} severity="info" />
+                            <div>{selectedAlert.error}</div>
                           </div>
                         </Card>
                       </div>
-
-                      
                     </div>
                   </Card>
                 </div>
@@ -328,17 +342,12 @@ export default function BasicFilterDemo() {
                           style={{ width: '20%' }}
                         />
                         <Column
-                          field="ip_monitoring"
-                          header="Dirección IP"
-                          style={{ width: '20%' }}
-                        />
-                        <Column
-                          field="status"
+                          field="state"
                           header="Estado"
                           style={{ width: '20%' }}
                         />
                         <Column
-                          field="created_at"
+                          field="start_time"
                           header="Fecha Creación"
                           style={{ width: '20%' }}
                           body={(rowData) => new Date(rowData.created_at).toLocaleString()}
@@ -369,28 +378,28 @@ export default function BasicFilterDemo() {
                           style={{ width: '20%' }}
                         />
                         <Column
-                          field="created_at"
+                          field="start_time"
                           header="Fecha Creación"
                           style={{ width: '20%' }}
-                          body={(rowData) => new Date(rowData.created_at).toLocaleString()}
+                          body={(rowData) => new Date(rowData.start_time).toLocaleString()}
                         />
                         <Column
-                          field="updated_at"
+                          field="update_time"
                           header="Fecha de Actualización"
                           style={{ width: '20%' }}
-                          body={(rowData) => new Date(rowData.updated_at).toLocaleString()}
+                          body={(rowData) => new Date(rowData.update_time).toLocaleString()}
                         />
                         <Column
-                          field="resolved_at"
+                          field="end_time"
                           header="Fecha de Resolución"
                           style={{ width: '20%' }}
-                          body={(rowData) => rowData.resolved_at ? new Date(rowData.resolved_at).toLocaleString() : '-'}
+                          body={(rowData) => rowData.end_time ? new Date(rowData.end_time).toLocaleString() : '-'}
                         />
                         <Column
-                          field="reopened_at"
+                          field="reopened_time"
                           header="Fecha de Reapertura"
                           style={{ width: '20%' }}
-                          body={(rowData) => rowData.reopened_at ? new Date(rowData.reopened_at).toLocaleString() : '-'}
+                          body={(rowData) => rowData.reopened_time ? new Date(rowData.reopened_time).toLocaleString() : '-'}
                         />
                       </DataTable>
                     )}

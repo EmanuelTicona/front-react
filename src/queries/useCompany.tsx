@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCompanies, companyById, addStructure, editStructure, deleteStructure } from "../api/company";
+import { getCompanies, companyById, createCompany, updateCompany, deleteCompany } from "../api/company";
+
 
 export const useCompaniesList = () => {
     return useQuery({
@@ -16,40 +17,36 @@ export const useCompanyById = (id: number) => {
   });
 };
 
-// Hook para agregar una estructura
-export const useAddStructure = () => {
+export const useAddCompany = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ companyId, file }: { companyId: number; file: File }) =>
-      addStructure(companyId, file),
+    mutationFn: createCompany,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies-repo'] });
+      queryClient.invalidateQueries({ queryKey: ['companies-list'] });
     },
   });
 };
 
-// Hook para editar una estructura
-export const useEditStructure = () => {
+export const useEditCompany = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ companyId, file }: { companyId: number; file: File }) =>
-      editStructure(companyId, file),
+    mutationFn: ({ id, updatedCompany }: { id: number; updatedCompany: Partial<Company> }) =>
+      updateCompany(id, updatedCompany),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies-repo'] });
+      queryClient.invalidateQueries({ queryKey: ['companies-list'] });
     },
   });
 };
 
-// Hook para eliminar una estructura
-export const useDeleteStructure = () => {
+export const useDeleteCompany = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (companyId: number) => deleteStructure(companyId),
+    mutationFn: deleteCompany,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies-repo'] });
+      queryClient.invalidateQueries({ queryKey: ['companies-list'] });
     },
   });
 };

@@ -8,7 +8,6 @@ import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { TabView, TabPanel } from 'primereact/tabview';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { useIntegrations, useAddIntegration, useEditIntegration, useDeleteIntegration, useAddStructure, useEditStructure, useDeleteStructure } from '../../queries/useIntegration';
