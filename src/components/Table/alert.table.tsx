@@ -191,7 +191,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
-          body={(rowData) => new Date(rowData.end_time).toLocaleString()}
+          body={(rowData) => rowData.end_time ? new Date(rowData.end_time).toLocaleString() : '-'}
         />
         <Column
           field="incident_id"
@@ -232,7 +232,7 @@ export default function BasicFilterDemo() {
           filter
           filterPlaceholder=""
           style={{ minWidth: "12rem" }}
-          body={(rowData) => rowData.update_time ? new Date(rowData.update_time).toLocaleString() : ''}
+          body={(rowData) => rowData.update_time ? new Date(rowData.update_time).toLocaleString() : '-'}
         />
         <Column
           field="error"
